@@ -7,8 +7,8 @@
 
 constexpr int TILE_WIDTH = 16;
 constexpr int TILE_HEIGHT = 16;
-constexpr int screenWidth = 1200;
-constexpr int screenHeight = 1200;
+constexpr int screenWidth = 1100;
+constexpr int screenHeight = 950;
 
 enum class TextureAsset { Tilemap };
 enum class SoundAsset { FootGrass, FootStone, Attack, Death, Coins };

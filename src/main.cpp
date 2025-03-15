@@ -1,69 +1,20 @@
 #include "raylib.h"
 #include "raymath.h"
 #include <array>
-
-constexpr int TILE_WIDTH = 16;
-constexpr int TILE_HEIGHT = 16;
-constexpr int screenWidth = 1600;
-constexpr int screenHeight = 1600;
-
-enum class TextureAsset { Tilemap };
-enum class SoundAsset { FootGrass, FootStone, Attack, Death, Coins };
-enum class MusicAsset { LightAmbience, DarkAmbience };
-enum class Zone { All, World, Dungeon };
-enum class TileType { Dirt, Grass, Tree };
-
-struct Tile {
-    int x;
-    int y;
-    TileType type;
-};
-
-struct Entity {
-    int x;
-    int y;
-    Zone zone;
-    bool isAlive;
-    bool isPassable;
-    int health;
-    int damage;
-    int money;
-    int experience;
-};
-
-class Timer {
-public:
-    double startTime;
-    double lifeTime;
-    bool isActive = false;
-
-    void Start(double lifetime) {
-        startTime = GetTime();
-        lifeTime = lifetime;
-        isActive = true;
-    }
-
-    bool IsDone() const {
-        return GetTime() - startTime >= lifeTime;
-    }
-
-    double GetElapsed() const {
-        return GetTime() - startTime;
-    }
-};
-
+#include "main.h"
 class Game {
 private:
     static constexpr int MAX_TEXTURES = 1;
     static constexpr int MAX_SOUNDS = 5;
     static constexpr int MAX_MUSIC = 2;
     static constexpr int WORLD_WIDTH = 30;
-    static constexpr int WORLD_HEIGHT = 30;
+    static constexpr int WORLD_HEIGHT = 20;
 
     std::array<Texture2D, MAX_TEXTURES> textures;
     std::array<Sound, MAX_SOUNDS> sounds;
     std::array<Music, MAX_MUSIC> music;
 
+// world stored in this 2D arry
     Tile world[WORLD_WIDTH][WORLD_HEIGHT];
     Tile dungeon[WORLD_WIDTH][WORLD_HEIGHT];
     Camera2D camera;
@@ -74,23 +25,27 @@ private:
     Entity chest;
 
     Timer combatTextTimer;
+    Timer playerTimer;
+
+    int player_timer = 0;
+    int bound = 8;
 
 public:
     Game() {
         camera.target = { 0, 0 };
         camera.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
         camera.rotation = 0.0f;
-        camera.zoom = 3.0f;
+        camera.zoom = 3.7f;
     }
 
     void Startup() {
 // enable sound output
         InitAudioDevice();
-
         Image image = LoadImage("assets/bit_packed.png");
         textures[static_cast<int>(TextureAsset::Tilemap)] = LoadTextureFromImage(image);
         UnloadImage(image);
 
+        // randomly pick tiles in world
         for (int i = 0; i < WORLD_WIDTH; ++i) {
             for (int j = 0; j < WORLD_HEIGHT; ++j) {
                 world[i][j] = { i, j, static_cast<TileType>(GetRandomValue(0, 2)) };
@@ -99,7 +54,7 @@ public:
         }
 
         player = {
-            24 * TILE_WIDTH, 1 * TILE_HEIGHT, Zone::World, true,false, 100, 0, 1000, 0
+            12 * TILE_WIDTH, 1 * TILE_HEIGHT, Zone::World, true,false, 100, 0, 1000, 0
         };
 
         dungeon_gate = { 
@@ -112,7 +67,6 @@ public:
 
         chest = { 0 };
 
-        camera.target = { static_cast<float>(player.x), static_cast<float>(player.y) };
 
         sounds[static_cast<int>(SoundAsset::FootGrass)] = LoadSound("assets/Grass1.wav");
         sounds[static_cast<int>(SoundAsset::FootStone)] = LoadSound("assets/Concrete1.wav");
@@ -143,11 +97,11 @@ public:
         if (IsKeyPressed(KEY_UP)) { y -= TILE_HEIGHT; hasKeyBeenPressed = true; }
         if (IsKeyPressed(KEY_DOWN)) { y += TILE_HEIGHT; hasKeyBeenPressed = true; }
 
-        float wheel = GetMouseWheelMove();
-        if (wheel != 0) {
-            camera.zoom += wheel * 0.125f;
-            camera.zoom = Clamp(camera.zoom, 3.0f, 8.0f);
-        }
+//       float wheel = GetMouseWheelMove();
+//        if (wheel != 0) {
+//            camera.zoom += wheel * 0.125f;
+//            camera.zoom = Clamp(camera.zoom, 3.0f, 8.0f);
+//        }
 
         if (player.zone == orc.zone && orc.isAlive && orc.x == x && orc.y == y) {
             int damage = GetRandomValue(2, 20);
@@ -176,7 +130,30 @@ public:
             }
             player.x = x;
             player.y = y;
+            int camera_x = x;
+            int camera_y = y;
             camera.target = { static_cast<float>(player.x), static_cast<float>(player.y) };
+            //std::cout << "player x" << player.x << std::endl;
+ 
+            if (player.x < bound * TILE_WIDTH) {
+                camera_x = bound * TILE_WIDTH;
+            }
+            else if (player.x > (TILE_WIDTH * (WORLD_WIDTH - bound))) {
+                camera_x = TILE_WIDTH * (WORLD_WIDTH - bound);
+            }
+            if (player.y < bound * TILE_HEIGHT) {
+                camera_y = bound * TILE_HEIGHT;
+            }
+            else if (player.y > (TILE_HEIGHT * (WORLD_HEIGHT - bound))) {
+                camera_y = TILE_HEIGHT * (WORLD_HEIGHT - bound);
+            }
+            camera.target = { static_cast<float>(camera_x), static_cast<float>(camera_y) };
+            /* else if (player.y < 2) {
+                camera.target = { static_cast<float>(player.x), static_cast<float>(3)};
+            }
+            else {
+                camera.target = { static_cast<float>(player.x), static_cast<float>(player.y) };
+            }*/
         }
 
         if (IsKeyPressed(KEY_E) && player.x == dungeon_gate.x && player.y == dungeon_gate.y) {
@@ -212,25 +189,41 @@ public:
                 int tx = 4, ty = 4;
 
                 switch (tile.type) {
-                case TileType::Grass: tx = 5; ty = 4; break;
-                case TileType::Tree:  tx = 5; ty = 5; break;
+                    case TileType::Grass: tx = 6; ty = 0; break;
+                    case TileType::Tree:  tx = 5; ty = 2; break;
+                    case TileType::Dirt:  tx = 2; ty = 0; break;
                 default: break;
+
+                }
+                if (i < 3 || j < 3 || i > (WORLD_WIDTH - 4)  || j > (WORLD_HEIGHT - 4)) {
+                    tx = 1; ty = 1;
                 }
                 DrawTile(tile.x * TILE_WIDTH, tile.y * TILE_HEIGHT, tx, ty);
             }
         }
 
-        DrawTile(dungeon_gate.x, dungeon_gate.y, 8, 9);
+        DrawTile(dungeon_gate.x, dungeon_gate.y, 3, 3);
 
         if (orc.zone == player.zone) {
             if (orc.isAlive) DrawTile(orc.x, orc.y, 11, 0);
-            if (combatTextTimer.isActive) {
+            if (combatTextTimer.isActive){
                 DrawText(TextFormat("%d", orc.damage), orc.x, orc.y - 10, 9, YELLOW);
             }
             if (chest.isAlive) DrawTile(chest.x, chest.y, 9, 3);
         }
 
-        DrawTile(player.x, player.y, 24, 0);
+        if (!playerTimer.isActive) {
+            playerTimer.Start(0.50);
+        }
+
+        if (player_timer == 0){
+            DrawTile(player.x, player.y, 24, 0);
+            player_timer = 1;
+        }
+        else{
+            DrawTile(player.x, player.y, 28, 0);
+            player_timer = 0;
+        }
         EndMode2D();
 
         DrawRectangle(5, 5, 330, 120, Fade(SKYBLUE, 0.5f));
@@ -279,7 +272,7 @@ int main() {
     while (!WindowShouldClose()) {
         game.Update();
         BeginDrawing();
-        ClearBackground(GRAY);
+        ClearBackground(RAYWHITE);
         game.Render();
         EndDrawing();
     }
