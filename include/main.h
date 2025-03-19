@@ -11,10 +11,11 @@ constexpr int screenWidth = 1100;
 constexpr int screenHeight = 950;
 
 enum class TextureAsset { Tilemap };
-enum class SoundAsset { FootGrass, FootStone, Attack, Death, Coins };
+enum class SoundAsset { FootGrass, FootStone, Attack, Death, Coins, Laser };
 enum class MusicAsset { LightAmbience, DarkAmbience };
 enum class Zone { All, World, Dungeon };
 enum class TileType { Dirt, Grass, Tree, Boundary };
+
 
 struct Tile {
     int x;

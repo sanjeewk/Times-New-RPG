@@ -2,10 +2,13 @@
 #include "raymath.h"
 #include <array>
 #include "main.h"
+#include "projectile.cpp"
+#include <vector>
+
 class Game {
 private:
     static constexpr int MAX_TEXTURES = 1;
-    static constexpr int MAX_SOUNDS = 5;
+    static constexpr int MAX_SOUNDS = 6;
     static constexpr int MAX_MUSIC = 2;
     static constexpr int WORLD_WIDTH = 30;
     static constexpr int WORLD_HEIGHT = 20;
@@ -27,8 +30,12 @@ private:
     Timer combatTextTimer;
     Timer playerTimer;
 
-    int player_timer = 0;
+    int player_sprite_toggle = 0;
     int bound = 8;
+
+    std::vector<Projectile> projectiles;
+    const float projectileSpeed = 5.0f;
+    const float projectileRadius = 2.0f;
 
 public:
     Game() {
@@ -39,7 +46,7 @@ public:
     }
 
     void Startup() {
-// enable sound output
+    // enable sound output
         InitAudioDevice();
         Image image = LoadImage("assets/bit_packed.png");
         textures[static_cast<int>(TextureAsset::Tilemap)] = LoadTextureFromImage(image);
@@ -48,13 +55,14 @@ public:
         // randomly pick tiles in world
         for (int i = 0; i < WORLD_WIDTH; ++i) {
             for (int j = 0; j < WORLD_HEIGHT; ++j) {
-                world[i][j] = { i, j, static_cast<TileType>(GetRandomValue(0, 2)) };
+                // world[i][j] = { i, j, static_cast<TileType>(GetRandomValue(0, 2)) };
+                world[i][j] = { i, j, static_cast<TileType>(1)};
                 dungeon[i][j] = { i, j, TileType::Dirt };
             }
         }
 
         player = {
-            12 * TILE_WIDTH, 1 * TILE_HEIGHT, Zone::World, true,false, 100, 0, 1000, 0
+            12 * TILE_WIDTH, 6 * TILE_HEIGHT, Zone::World, true,false, 100, 0, 1000, 0
         };
 
         dungeon_gate = { 
@@ -67,12 +75,13 @@ public:
 
         chest = { 0 };
 
-
+        TraceLog(LOG_INFO, "Application started!--------------------------------------------------------------------------------------------------------");
         sounds[static_cast<int>(SoundAsset::FootGrass)] = LoadSound("assets/Grass1.wav");
         sounds[static_cast<int>(SoundAsset::FootStone)] = LoadSound("assets/Concrete1.wav");
         sounds[static_cast<int>(SoundAsset::Attack)] = LoadSound("assets/07_human_atk_sword_2.wav");
         sounds[static_cast<int>(SoundAsset::Death)] = LoadSound("assets/24_orc_death_spin.wav");
         sounds[static_cast<int>(SoundAsset::Coins)] = LoadSound("assets/handleCoins.ogg");
+        sounds[static_cast<int>(SoundAsset::Laser)] = LoadSound("assets/retro_laser.mp3");
 
         music[static_cast<int>(MusicAsset::LightAmbience)] = LoadMusicStream("assets/light-ambience.mp3");
         music[static_cast<int>(MusicAsset::DarkAmbience)] = LoadMusicStream("assets/dark-ambience.mp3");
@@ -90,10 +99,47 @@ public:
 
         float x = player.x;
         float y = player.y;
+
+        Vector2 mouseScreen = GetMousePosition();
+        Vector2 mousePos = GetScreenToWorld2D(mouseScreen, camera);
+
+        // Shoot when left mouse button is pressed
+
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            PlaySound(sounds[static_cast<int>(SoundAsset::Laser)]);
+            //TraceLog(LOG_INFO, "mouse pressed x=%f, y=%f", mousePos.x, mousePos.y);
+            //TraceLog(LOG_INFO, "1. Position: x=%f, y=%f", x, y);
+            Vector2 direction = Vector2Normalize(Vector2Subtract(mousePos, Vector2{x+8,y+8}));
+
+            // Create new projectile
+            Projectile newProjectile = {
+                Vector2{x+8,y+8},
+                direction,
+                projectileSpeed,
+                true
+            };
+
+            // Add to projectiles list
+            projectiles.push_back(newProjectile);
+        }
+
+        projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
+        [](const Projectile& p) { return !p.active; }), projectiles.end());
+
+
+
         bool hasKeyBeenPressed = false;
 
-        if (IsKeyPressed(KEY_LEFT)) { x -= TILE_WIDTH; hasKeyBeenPressed = true; }
-        if (IsKeyPressed(KEY_RIGHT)) { x += TILE_WIDTH; hasKeyBeenPressed = true; }
+        if (IsKeyPressed(KEY_LEFT))
+        { 
+            x -= TILE_WIDTH; 
+            hasKeyBeenPressed = true; 
+        }
+        if (IsKeyPressed(KEY_RIGHT))
+        { 
+            x += TILE_WIDTH; 
+            hasKeyBeenPressed = true; 
+        }
         if (IsKeyPressed(KEY_UP)) { y -= TILE_HEIGHT; hasKeyBeenPressed = true; }
         if (IsKeyPressed(KEY_DOWN)) { y += TILE_HEIGHT; hasKeyBeenPressed = true; }
 
@@ -102,6 +148,18 @@ public:
 //            camera.zoom += wheel * 0.125f;
 //            camera.zoom = Clamp(camera.zoom, 3.0f, 8.0f);
 //        }
+
+        int wx = x / TILE_WIDTH;
+        int wy = y / TILE_HEIGHT;
+
+        Tile target_tile = (player.zone == Zone::World) ? world[wx][wy] : dungeon[wx][wy];
+
+        // TraceLog(LOG_INFO, "1. Position: x=%f, y=%f", x, y);
+        if (target_tile.type == TileType::Boundary) {
+            // TraceLog(LOG_INFO, "1. Position: x=%f, y=%f", x, y);
+            x = player.x;
+            y = player.y;
+        }
 
         if (player.zone == orc.zone && orc.isAlive && orc.x == x && orc.y == y) {
             int damage = GetRandomValue(2, 20);
@@ -148,6 +206,7 @@ public:
                 camera_y = TILE_HEIGHT * (WORLD_HEIGHT - bound);
             }
             camera.target = { static_cast<float>(camera_x), static_cast<float>(camera_y) };
+
             /* else if (player.y < 2) {
                 camera.target = { static_cast<float>(player.x), static_cast<float>(3)};
             }
@@ -178,6 +237,20 @@ public:
         if (combatTextTimer.IsDone()) {
             combatTextTimer.isActive = false;
         }
+
+        // Update projectiles
+        for (auto& projectile : projectiles) {
+            if (projectile.active) {
+                projectile.position = Vector2Add(projectile.position, 
+                    Vector2Scale(projectile.direction, projectile.speed));
+
+                // Deactivate projectiles that go off-screen
+                if (projectile.position.x < 0 || projectile.position.x > screenWidth ||
+                    projectile.position.y < 0 || projectile.position.y > screenHeight) {
+                    projectile.active = false;
+                }
+            }
+        }
     }
 
     void Render() {
@@ -193,10 +266,11 @@ public:
                     case TileType::Tree:  tx = 5; ty = 2; break;
                     case TileType::Dirt:  tx = 2; ty = 0; break;
                 default: break;
-
+                    
                 }
-                if (i < 3 || j < 3 || i > (WORLD_WIDTH - 4)  || j > (WORLD_HEIGHT - 4)) {
-                    tx = 1; ty = 1;
+                if (i < 3 || j < 3 || i >(WORLD_WIDTH - 4) || j >(WORLD_HEIGHT - 4)) {
+                    world[i][j] = Tile{ i, j, TileType::Boundary };
+                    tx = 0; ty = 13;
                 }
                 DrawTile(tile.x * TILE_WIDTH, tile.y * TILE_HEIGHT, tx, ty);
             }
@@ -212,18 +286,31 @@ public:
             if (chest.isAlive) DrawTile(chest.x, chest.y, 9, 3);
         }
 
+
         if (!playerTimer.isActive) {
-            playerTimer.Start(0.50);
+            playerTimer.Start(0.3);
         }
 
-        if (player_timer == 0){
-            DrawTile(player.x, player.y, 24, 0);
-            player_timer = 1;
+        if (playerTimer.IsDone()) {
+            playerTimer.isActive = false;
+            // use XOR to toggle between sprites
+            player_sprite_toggle ^= 1;
+        }
+
+        if (player_sprite_toggle == 0){
+            DrawTile(player.x, player.y, 19, 8);
         }
         else{
-            DrawTile(player.x, player.y, 28, 0);
-            player_timer = 0;
+            DrawTile(player.x, player.y, 22, 8);
         }
+
+        // Draw projectiles
+        for (const auto& projectile : projectiles) {
+            if (projectile.active) {
+                DrawCircleV(projectile.position, projectileRadius, RED);
+            }
+        }
+
         EndMode2D();
 
         DrawRectangle(5, 5, 330, 120, Fade(SKYBLUE, 0.5f));
@@ -245,7 +332,7 @@ public:
     }
 
 private:
-    void DrawTile(int pos_x, int pos_y, int texture_index_x, int texture_index_y) {
+    void DrawTile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip=0) {
         Rectangle source = {
             static_cast<float>(TILE_WIDTH * texture_index_x),
             static_cast<float>(TILE_HEIGHT * texture_index_y),
