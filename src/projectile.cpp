@@ -1,7 +1,7 @@
 #include <vector>
 #include "raylib.h"
 #include "raymath.h"
-#include "projectile.h"
+#include "projectile.hpp"
 
 constexpr int scWidth = 1100;
 constexpr int scHeight = 950;

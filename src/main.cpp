@@ -1,7 +1,9 @@
-#include "main.h"
+#include <array>
+
 #include "raylib.h"
 #include "raymath.h"
-#include <array>
+
+#include "main.hpp"
 
 class Game {
 private:
@@ -181,18 +183,19 @@ public:
             int camera_y = y;
             camera.target = { static_cast<float>(player.x), static_cast<float>(player.y) };
             //std::cout << "player x" << player.x << std::endl;
- 
+            
+            // variable camera control
             if (player.x < bound * TILE_WIDTH) {
                 camera_x = bound * TILE_WIDTH;
             }
             else if (player.x > (TILE_WIDTH * (WORLD_WIDTH - bound))) {
-                camera_x = TILE_WIDTH * (WORLD_WIDTH - bound);
+                camera_x = (WORLD_WIDTH - bound) * TILE_WIDTH;
             }
             if (player.y < bound * TILE_HEIGHT) {
                 camera_y = bound * TILE_HEIGHT;
             }
             else if (player.y > (TILE_HEIGHT * (WORLD_HEIGHT - bound))) {
-                camera_y = TILE_HEIGHT * (WORLD_HEIGHT - bound);
+                camera_y = (WORLD_HEIGHT - bound) * TILE_HEIGHT;
             }
             camera.target = { static_cast<float>(camera_x), static_cast<float>(camera_y) };
 
