@@ -1,27 +1,23 @@
 #pragma once
-#pragma once
 
 #include "raylib.h"
 #include "raymath.h"
 #include <array>
+#include "tilemap.h"
+#include "audio.h"
+#include "projectile.h"
+#include <vector>
 
 constexpr int TILE_WIDTH = 16;
 constexpr int TILE_HEIGHT = 16;
 constexpr int screenWidth = 1100;
 constexpr int screenHeight = 950;
 
+
+enum class GameState {Pause, Game};
 enum class TextureAsset { Tilemap };
-enum class SoundAsset { FootGrass, FootStone, Attack, Death, Coins, Laser };
-enum class MusicAsset { LightAmbience, DarkAmbience };
 enum class Zone { All, World, Dungeon };
-enum class TileType { Dirt, Grass, Tree, Boundary };
 
-
-struct Tile {
-    int x;
-    int y;
-    TileType type;
-};
 
 struct Entity {
     int x;

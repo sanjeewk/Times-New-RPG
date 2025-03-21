@@ -1,21 +1,15 @@
+#include "main.h"
 #include "raylib.h"
 #include "raymath.h"
 #include <array>
-#include "main.h"
-#include "projectile.cpp"
-#include <vector>
 
 class Game {
 private:
     static constexpr int MAX_TEXTURES = 1;
-    static constexpr int MAX_SOUNDS = 6;
-    static constexpr int MAX_MUSIC = 2;
-    static constexpr int WORLD_WIDTH = 30;
+    static constexpr int WORLD_WIDTH = 25;
     static constexpr int WORLD_HEIGHT = 20;
 
     std::array<Texture2D, MAX_TEXTURES> textures;
-    std::array<Sound, MAX_SOUNDS> sounds;
-    std::array<Music, MAX_MUSIC> music;
 
 // world stored in this 2D arry
     Tile world[WORLD_WIDTH][WORLD_HEIGHT];
@@ -30,12 +24,15 @@ private:
     Timer combatTextTimer;
     Timer playerTimer;
 
+    Audio audio;
     int player_sprite_toggle = 0;
     int bound = 8;
+
 
     std::vector<Projectile> projectiles;
     const float projectileSpeed = 5.0f;
     const float projectileRadius = 2.0f;
+
 
 public:
     Game() {
@@ -48,6 +45,7 @@ public:
     void Startup() {
     // enable sound output
         InitAudioDevice();
+        audio = Audio();
         Image image = LoadImage("assets/bit_packed.png");
         textures[static_cast<int>(TextureAsset::Tilemap)] = LoadTextureFromImage(image);
         UnloadImage(image);
@@ -76,25 +74,15 @@ public:
         chest = { 0 };
 
         TraceLog(LOG_INFO, "Application started!--------------------------------------------------------------------------------------------------------");
-        sounds[static_cast<int>(SoundAsset::FootGrass)] = LoadSound("assets/Grass1.wav");
-        sounds[static_cast<int>(SoundAsset::FootStone)] = LoadSound("assets/Concrete1.wav");
-        sounds[static_cast<int>(SoundAsset::Attack)] = LoadSound("assets/07_human_atk_sword_2.wav");
-        sounds[static_cast<int>(SoundAsset::Death)] = LoadSound("assets/24_orc_death_spin.wav");
-        sounds[static_cast<int>(SoundAsset::Coins)] = LoadSound("assets/handleCoins.ogg");
-        sounds[static_cast<int>(SoundAsset::Laser)] = LoadSound("assets/retro_laser.mp3");
-
-        music[static_cast<int>(MusicAsset::LightAmbience)] = LoadMusicStream("assets/light-ambience.mp3");
-        music[static_cast<int>(MusicAsset::DarkAmbience)] = LoadMusicStream("assets/dark-ambience.mp3");
-
-        PlayMusicStream(music[static_cast<int>(MusicAsset::LightAmbience)]);
+        audio.play_music(MusicAsset::LightAmbience); 
     }
 
     void Update() {
         if (player.zone == Zone::World) {
-            UpdateMusicStream(music[static_cast<int>(MusicAsset::LightAmbience)]);
+            audio.update_music(MusicAsset::LightAmbience);
         }
         else if (player.zone == Zone::Dungeon) {
-            UpdateMusicStream(music[static_cast<int>(MusicAsset::DarkAmbience)]);
+            audio.update_music(MusicAsset::DarkAmbience);
         }
 
         float x = player.x;
@@ -106,7 +94,8 @@ public:
         // Shoot when left mouse button is pressed
 
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            PlaySound(sounds[static_cast<int>(SoundAsset::Laser)]);
+            // PlaySound(sounds[static_cast<int>(SoundAsset::Laser)]);
+            audio.play_sound(SoundAsset::Laser);
             //TraceLog(LOG_INFO, "mouse pressed x=%f, y=%f", mousePos.x, mousePos.y);
             //TraceLog(LOG_INFO, "1. Position: x=%f, y=%f", x, y);
             Vector2 direction = Vector2Normalize(Vector2Subtract(mousePos, Vector2{x+8,y+8}));
@@ -125,7 +114,7 @@ public:
 
         projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
         [](const Projectile& p) { return !p.active; }), projectiles.end());
-
+        //remove_projectiles()
 
 
         bool hasKeyBeenPressed = false;
@@ -171,20 +160,20 @@ public:
             }
 
             if (orc.health <= 0) {
-                PlaySound(sounds[static_cast<int>(SoundAsset::Death)]);
+                audio.play_sound(SoundAsset::Death);
                 orc.isAlive = false;
                 player.experience += orc.experience;
 
                 chest = { orc.x, orc.y, orc.zone, true, true, 0, 0, GetRandomValue(10, 100), 0 };
             }
             else {
-                PlaySound(sounds[static_cast<int>(SoundAsset::Attack)]);
+                audio.play_sound(SoundAsset::Attack);
             }
         }
         else {
             if (hasKeyBeenPressed) {
                 SoundAsset sound = (player.zone == Zone::World) ? SoundAsset::FootGrass : SoundAsset::FootStone;
-                PlaySound(sounds[static_cast<int>(sound)]);
+                audio.play_sound(sound);
             }
             player.x = x;
             player.y = y;
@@ -218,19 +207,19 @@ public:
         if (IsKeyPressed(KEY_E) && player.x == dungeon_gate.x && player.y == dungeon_gate.y) {
             if (player.zone == Zone::World) {
                 player.zone = Zone::Dungeon;
-                StopMusicStream(music[static_cast<int>(MusicAsset::LightAmbience)]);
-                PlayMusicStream(music[static_cast<int>(MusicAsset::DarkAmbience)]);
+                audio.stop_music(MusicAsset::LightAmbience);
+                audio.play_music(MusicAsset::DarkAmbience);
             }
             else {
                 player.zone = Zone::World;
-                StopMusicStream(music[static_cast<int>(MusicAsset::DarkAmbience)]);
-                PlayMusicStream(music[static_cast<int>(MusicAsset::LightAmbience)]);
+                audio.stop_music(MusicAsset::DarkAmbience);
+                audio.play_music(MusicAsset::LightAmbience);
             }
         }
 
         if (IsKeyPressed(KEY_G) && player.x == chest.x && player.y == chest.y && chest.isAlive) {
             player.money += chest.money;
-            PlaySound(sounds[static_cast<int>(SoundAsset::Coins)]);
+            audio.play_sound(SoundAsset::Coins);
             chest.isAlive = false;
         }
 
@@ -240,16 +229,7 @@ public:
 
         // Update projectiles
         for (auto& projectile : projectiles) {
-            if (projectile.active) {
-                projectile.position = Vector2Add(projectile.position, 
-                    Vector2Scale(projectile.direction, projectile.speed));
-
-                // Deactivate projectiles that go off-screen
-                if (projectile.position.x < 0 || projectile.position.x > screenWidth ||
-                    projectile.position.y < 0 || projectile.position.y > screenHeight) {
-                    projectile.active = false;
-                }
-            }
+            update_projectile(projectile);
         }
     }
 
@@ -326,9 +306,9 @@ public:
 
     void Shutdown() {
         for (auto& texture : textures) UnloadTexture(texture);
-        for (auto& sound : sounds) UnloadSound(sound);
-        for (auto& m : music) { StopMusicStream(m); UnloadMusicStream(m); }
+        audio.shutdown_audio();
         CloseAudioDevice();
+        
     }
 
 private:
@@ -359,7 +339,7 @@ int main() {
     while (!WindowShouldClose()) {
         game.Update();
         BeginDrawing();
-        ClearBackground(RAYWHITE);
+        ClearBackground(BLACK);
         game.Render();
         EndDrawing();
     }
