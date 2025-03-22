@@ -12,3 +12,5 @@ struct Projectile
 };
 
 void update_projectile(Projectile& projectile);
+void test();
+void collisions(std::vector<Projectile>& projectiles);

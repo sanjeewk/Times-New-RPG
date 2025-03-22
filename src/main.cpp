@@ -234,6 +234,8 @@ public:
         for (auto& projectile : projectiles) {
             update_projectile(projectile);
         }
+        collisions(projectiles);
+        
     }
 
     void Render() {
@@ -276,7 +278,6 @@ public:
 
         if (playerTimer.IsDone()) {
             playerTimer.isActive = false;
-            // use XOR to toggle between sprites
             player_sprite_toggle ^= 1;
         }
 
@@ -293,6 +294,7 @@ public:
                 DrawCircleV(projectile.position, projectileRadius, RED);
             }
         }
+        DrawCircleV(Vector2{80,80}, 5.0f, RED);
 
         EndMode2D();
 
