@@ -1,7 +1,6 @@
-#include <vector>
-#include "raylib.h"
-#include "raymath.h"
+
 #include "projectile.hpp"
+
 #include <string>
 
 constexpr int scWidth = 1100;
@@ -24,22 +23,19 @@ void update_projectile(Projectile& projectile) {
 }
 
 // projectile collisions
-void collisions(std::vector<Projectile>& projectiles) {
+void collisions(std::vector<Projectile>& projectiles, Entity& enemy) {
 
     for (Projectile& projectile : projectiles) {
+        //static_cast<float>(enemy.x), static_cast<float>(enemy.x)
 
-        if (CheckCollisionCircles(projectile.position, 8.0f,
-            Vector2{80.0, 80.0}, 8.0f)) {
+        if (CheckCollisionCircles(projectile.position, 8.0f, Vector2{ static_cast<float>(enemy.x), static_cast<float>(enemy.x) }, 8.0f)) {
             projectile.active = false;
             // Handle enemy hit
             TraceLog(LOG_INFO, "Collisions");
+            enemy.health -= 10;
+
         }
-        // if (!projectile.active) {
-        //     TraceLog(LOG_INFO, "NOT ACTIVE");
-        // }
     }
-
-
 }
 
 void test(){

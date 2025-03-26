@@ -1,7 +1,10 @@
 #pragma once
 #include <vector>
+
 #include "raylib.h"
 #include "raymath.h"
+
+#include "player.hpp"
 
 struct Projectile
 {
@@ -11,6 +14,6 @@ struct Projectile
     bool active;
 };
 
+void collisions(std::vector<Projectile>& projectiles, Entity& enemy);
 void update_projectile(Projectile& projectile);
 void test();
-void collisions(std::vector<Projectile>& projectiles);
