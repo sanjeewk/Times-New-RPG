@@ -28,7 +28,7 @@ void collisions(std::vector<Projectile>& projectiles, Entity& enemy) {
     for (Projectile& projectile : projectiles) {
         //static_cast<float>(enemy.x), static_cast<float>(enemy.x)
 
-        if (CheckCollisionCircles(projectile.position, 8.0f, Vector2{ static_cast<float>(enemy.x), static_cast<float>(enemy.x) }, 8.0f)) {
+        if (CheckCollisionCircles(projectile.position, 8.0f, Vector2{ static_cast<float>(enemy.x), static_cast<float>(enemy.y) }, 8.0f)) {
             projectile.active = false;
             // Handle enemy hit
             TraceLog(LOG_INFO, "Collisions");

@@ -289,7 +289,6 @@ void Game::Render() {
             DrawCircleV(projectile.position, projectileRadius, RED);
         }
     }
-    DrawCircleV(Vector2{80,80}, 5.0f, RED);
 
     EndMode2D();
 
