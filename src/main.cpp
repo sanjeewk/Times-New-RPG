@@ -15,6 +15,8 @@ void Game::Startup() {
     audio = Audio();
     Image image = LoadImage("assets/bit_packed.png");
     textures[static_cast<int>(TextureAsset::Tilemap)] = LoadTextureFromImage(image);
+    Image player_image = LoadImage("assets/player_sprite/2_walk.png");
+    textures[static_cast<int>(TextureAsset::Player)] = LoadTextureFromImage(player_image);    
     UnloadImage(image);
 
     // randomly pick tiles in world
@@ -275,12 +277,12 @@ void Game::Render() {
         playerTimer.isActive = false;
         player_sprite_toggle ^= 1;
     }
-
+    // Draw player sprite
     if (player_sprite_toggle == 0){
-        DrawTile(player.x, player.y, 19, 8);
+        DrawPlayerTile(player.x, player.y, 0, 1);
     }
     else{
-        DrawTile(player.x, player.y, 22, 8);
+        DrawPlayerTile(player.x, player.y, 0, 3);
     }
 
     // Draw projectiles
@@ -324,6 +326,22 @@ void Game::DrawTile(int pos_x, int pos_y, int texture_index_x, int texture_index
         static_cast<float>(TILE_HEIGHT)
     };
     DrawTexturePro(textures[static_cast<int>(TextureAsset::Tilemap)], source, dest, { 0,0 }, 0, WHITE);
+}
+
+void Game::DrawPlayerTile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip) {
+    Rectangle source = {
+        static_cast<float>(TILE_WIDTH * texture_index_x),
+        static_cast<float>(TILE_HEIGHT * texture_index_y),
+        static_cast<float>(TILE_WIDTH),
+        static_cast<float>(TILE_HEIGHT)
+    };
+    Rectangle dest = {
+        static_cast<float>(pos_x),
+        static_cast<float>(pos_y),
+        static_cast<float>(TILE_WIDTH),
+        static_cast<float>(TILE_HEIGHT)
+    };
+    DrawTexturePro(textures[static_cast<int>(TextureAsset::Player)], source, dest, { 0,0 }, 0, WHITE);
 }
 
 

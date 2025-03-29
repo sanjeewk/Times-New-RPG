@@ -9,10 +9,11 @@
 #include "audio.hpp"
 #include "projectile.hpp"
 #include "player.hpp"
+#include "mob.hpp"
 
 
 enum class GameState {Pause, Game};
-enum class TextureAsset { Tilemap };
+enum class TextureAsset { Tilemap, Player };
 
 // function to get if coordinates are outside the bound
 // enemy class
@@ -42,7 +43,7 @@ public:
 
 class Game {
     private:
-        static constexpr int MAX_TEXTURES = 1;
+        static constexpr int MAX_TEXTURES = 2;
         static constexpr int WORLD_WIDTH = 25;
         static constexpr int WORLD_HEIGHT = 20;
     
@@ -67,6 +68,7 @@ class Game {
         int wall_width = 3;
     
         std::vector<Projectile> projectiles;
+        std::vector<Mob> enemies;
         const float projectileSpeed = 5.0f;
         const float projectileRadius = 2.0f;
     
@@ -83,4 +85,5 @@ class Game {
         void Shutdown();    
     // private:
         void DrawTile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip=0);
+        void DrawPlayerTile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip=0);
     };
