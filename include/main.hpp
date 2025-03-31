@@ -13,7 +13,7 @@
 
 
 enum class GameState {Pause, Game};
-enum class TextureAsset { Tilemap, Player };
+enum class TextureAsset { Tilemap, Player, Dungeon };
 
 // function to get if coordinates are outside the bound
 // enemy class
@@ -40,12 +40,11 @@ public:
 
 };
 
-
 class Game {
     private:
-        static constexpr int MAX_TEXTURES = 2;
-        static constexpr int WORLD_WIDTH = 25;
-        static constexpr int WORLD_HEIGHT = 20;
+        static constexpr int MAX_TEXTURES = 3;
+        static constexpr int WORLD_WIDTH = 20;
+        static constexpr int WORLD_HEIGHT = 18;
     
         std::array<Texture2D, MAX_TEXTURES> textures;
     
@@ -58,6 +57,8 @@ class Game {
         Entity dungeon_gate;
         Entity orc;
         Entity chest;
+
+        Mob enemy;
     
         Timer combatTextTimer;
         Timer playerTimer;
@@ -67,9 +68,10 @@ class Game {
         int bound = 8;
         int wall_width = 3;
     
-        std::vector<Projectile> projectiles;
+        std::vector<Projectile> player_projectiles;
+        std::vector<Projectile> enemy_projectiles;
         std::vector<Mob> enemies;
-        const float projectileSpeed = 5.0f;
+
         const float projectileRadius = 2.0f;
     
     

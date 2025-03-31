@@ -2,6 +2,7 @@
 #include "projectile.hpp"
 
 #include <string>
+#include <mob.hpp>
 
 constexpr int scWidth = 1100;
 constexpr int scHeight = 950;
@@ -23,12 +24,12 @@ void update_projectile(Projectile& projectile) {
 }
 
 // projectile collisions
-void collisions(std::vector<Projectile>& projectiles, Entity& enemy) {
+void collisions(std::vector<Projectile>& projectiles, Mob enemy) {
 
     for (Projectile& projectile : projectiles) {
         //static_cast<float>(enemy.x), static_cast<float>(enemy.x)
 
-        if (CheckCollisionCircles(projectile.position, 8.0f, Vector2{ static_cast<float>(enemy.x), static_cast<float>(enemy.y) }, 8.0f)) {
+        if (CheckCollisionCircles(projectile.position, 8.0f, Vector2{ enemy.x, enemy.y}, 8.0f)) {
             projectile.active = false;
             // Handle enemy hit
             TraceLog(LOG_INFO, "Collisions");
@@ -38,10 +39,8 @@ void collisions(std::vector<Projectile>& projectiles, Entity& enemy) {
     }
 }
 
-void test(){
-    TraceLog(LOG_INFO, "Test");
+// remove inactive projectiles
+void remove_projectiles(std::vector<Projectile>& projectiles){
+   projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
+   [](const Projectile& p) { return !p.active; }), projectiles.end());
 }
-//void remove_projectiles(){
-//    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
-//    [](const Projectile& p) { return !p.active; }), projectiles.end());
-//}
