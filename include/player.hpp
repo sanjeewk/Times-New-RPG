@@ -4,8 +4,8 @@
 enum class Zone { All, World, Dungeon };
 
 struct Entity {
-    int x;
-    int y;
+    float x;
+    float y;
     Zone zone;
     bool isAlive;
     bool isPassable;
