@@ -9,10 +9,11 @@
 
 class Mob{
 public:
+    float x, y; // Position of the mob
     std::string name;
     int health;
     int attackPower;
-    float x, y; // Position of the mob
+
 
     bool isAlive;
     // costructor

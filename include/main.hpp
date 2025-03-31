@@ -55,7 +55,6 @@ class Game {
     
         Entity player;
         Entity dungeon_gate;
-        Entity orc;
         Entity chest;
 
         Mob enemy;

@@ -39,10 +39,6 @@ void Game::Startup() {
     dungeon_gate = { 
         10 * TILE_WIDTH, 10 * TILE_HEIGHT, Zone::All, false,true, 0,0,0,0
     };
-
-    orc = {
-        5 * TILE_WIDTH, 5 * TILE_HEIGHT, Zone::World,true, false, 100, 0, 0, GetRandomValue(10, 100)
-    };
     enemy = Mob(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT );
 
     chest = { 0 };
@@ -134,85 +130,42 @@ void Game::Update() {
         }
     }
 
-    if (player.zone == orc.zone && orc.isAlive) {
-
-        if (orc.health <= 0) 
-        {
-            audio.play_sound(SoundAsset::Death);
-            orc.isAlive = false;
-            player.experience += orc.experience;
-
-            chest = { orc.x, orc.y, orc.zone, true, true, 0, 0, GetRandomValue(10, 100), 0 };
-        }
-        else {
-            if (!combatTextTimer.isActive) {
-                combatTextTimer.Start(0.50);
-            
-                int movement = GetRandomValue(1, 4);
-                int mob_move_x = 0;            
-                int mob_move_y = 0;
-                
-                switch (movement) {
-                    case 1: mob_move_x = -TILE_WIDTH; break;
-                    case 2: mob_move_x = TILE_WIDTH; break;
-                    case 3: mob_move_y = -TILE_HEIGHT; break;
-                    case 4: mob_move_y = TILE_HEIGHT; break;
-                }
-                Tile target_tile = world[int(orc.x + mob_move_x) / TILE_WIDTH][int(orc.y + mob_move_y) / TILE_HEIGHT];
-                
-                if (target_tile.type != TileType::Boundary) 
-                {
-                    // TraceLog(LOG_INFO, "1. Position: x=%f, y=%f", x, y);
-                    orc.x += mob_move_x;
-                    orc.y += mob_move_y;
-                }
-                
-                Vector2 direction = Vector2Normalize(Vector2Subtract(Vector2{x,y}, Vector2{0,0}));
-
-                // Create new projectile
-                //Projectile newProjectile = {Vector2{0,0}, direction, projectileSpeed, true};
-
-                //projectiles.push_back(newProjectile);
-            }
-
-        }
+    
+    if (hasKeyBeenPressed) {
+        SoundAsset sound = (player.zone == Zone::World) ? SoundAsset::FootGrass : SoundAsset::FootStone;
+        audio.play_sound(sound);
     }
-    
-        if (hasKeyBeenPressed) {
-            SoundAsset sound = (player.zone == Zone::World) ? SoundAsset::FootGrass : SoundAsset::FootStone;
-            audio.play_sound(sound);
-        }
 
-        
-        player.x = x;
-        player.y = y;
-        int camera_x = x;
-        int camera_y = y;
+    
+    player.x = x;
+    player.y = y;
+    int camera_x = x;
+    int camera_y = y;
+    camera.target = { static_cast<float>(player.x), static_cast<float>(player.y) };
+    //std::cout << "player x" << player.x << std::endl;
+    
+    // variable camera control
+    if (player.x < bound * TILE_WIDTH) {
+        camera_x = bound * TILE_WIDTH;
+    }
+    else if (player.x > (TILE_WIDTH * (WORLD_WIDTH - bound))) {
+        camera_x = (WORLD_WIDTH - bound) * TILE_WIDTH;
+    }
+    if (player.y < bound * TILE_HEIGHT) {
+        camera_y = bound * TILE_HEIGHT;
+    }
+    else if (player.y > (TILE_HEIGHT * (WORLD_HEIGHT - bound))) {
+        camera_y = (WORLD_HEIGHT - bound) * TILE_HEIGHT;
+    }
+    camera.target = { static_cast<float>(camera_x), static_cast<float>(camera_y) };
+
+    /* else if (player.y < 2) {
+        camera.target = { static_cast<float>(player.x), static_cast<float>(3)};
+    }
+    else {
         camera.target = { static_cast<float>(player.x), static_cast<float>(player.y) };
-        //std::cout << "player x" << player.x << std::endl;
-        
-        // variable camera control
-        if (player.x < bound * TILE_WIDTH) {
-            camera_x = bound * TILE_WIDTH;
-        }
-        else if (player.x > (TILE_WIDTH * (WORLD_WIDTH - bound))) {
-            camera_x = (WORLD_WIDTH - bound) * TILE_WIDTH;
-        }
-        if (player.y < bound * TILE_HEIGHT) {
-            camera_y = bound * TILE_HEIGHT;
-        }
-        else if (player.y > (TILE_HEIGHT * (WORLD_HEIGHT - bound))) {
-            camera_y = (WORLD_HEIGHT - bound) * TILE_HEIGHT;
-        }
-        camera.target = { static_cast<float>(camera_x), static_cast<float>(camera_y) };
+    }*/
 
-        /* else if (player.y < 2) {
-            camera.target = { static_cast<float>(player.x), static_cast<float>(3)};
-        }
-        else {
-            camera.target = { static_cast<float>(player.x), static_cast<float>(player.y) };
-        }*/
-    
 
     if (IsKeyPressed(KEY_E) && player.x == dungeon_gate.x && player.y == dungeon_gate.y) {
         if (player.zone == Zone::World) {
@@ -246,7 +199,7 @@ void Game::Update() {
     }
     
     collisions(player_projectiles, enemy);
-    //collisions(enemy_projectiles, player);
+    collisions(enemy_projectiles, player);
 }
 
 void Game::Render() {
@@ -284,13 +237,7 @@ void Game::Render() {
 
     DrawTile(dungeon_gate.x, dungeon_gate.y, 9, 4);
 
-    if (orc.zone == player.zone) {
-        if (orc.isAlive) DrawTile(orc.x, orc.y, 9, 9);
-        if (combatTextTimer.isActive){
-            DrawText(TextFormat("%d", orc.damage), orc.x, orc.y - 10, 9, YELLOW);
-        }
-        if (chest.isAlive) DrawTile(chest.x, chest.y, 9, 3);
-    }
+    //DrawText(TextFormat("%d", orc.damage), orc.x, orc.y - 10, 9, YELLOW);
 
     if (enemy.isAlive) {
         DrawTile(enemy.getX(), enemy.getY(), 0, 9);
@@ -339,15 +286,13 @@ void Game::Render() {
 
     EndMode2D();
 
-    DrawRectangle(5, 5, 330, 140, Fade(SKYBLUE, 1.0f));
+    //DrawRectangle(5, 5, 330, 140, Fade(SKYBLUE, 1.0f));
     DrawRectangleLines(5, 5, 330, 120, BLUE);
     DrawText(TextFormat("Camera Target: (%06.2f, %06.2f", camera.target.x, camera.target.y), 15, 10, 14, YELLOW);
     DrawText(TextFormat("Camera Zoom: %06.2f", camera.zoom), 15, 30, 14, YELLOW);
     DrawText(TextFormat("Player Health: %d", player.health), 15, 50, 14, YELLOW);
-    DrawText(TextFormat("Player XP: %d", player.experience), 15, 70, 14, YELLOW);
     DrawText(TextFormat("Player Money: %d", player.money), 15, 90, 14, YELLOW);
     DrawText(TextFormat("player x y: %d %d", player.x/16, player.y/16), 15, 110, 14, YELLOW);
-    if (orc.isAlive) DrawText(TextFormat("Orc Health: %d", orc.health), 15, 130, 14, YELLOW);
 }
 
 void Game::Shutdown() {
