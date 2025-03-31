@@ -1,6 +1,7 @@
 #include "main.hpp"
 
-Game::Game() {
+Game::Game(): enemy(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT)
+{
     camera.target = { 0, 0 };
     camera.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
     camera.rotation = 0.0f;
@@ -15,10 +16,13 @@ void Game::Startup() {
     audio = Audio();
     Image image = LoadImage("assets/bit_packed.png");
     textures[static_cast<int>(TextureAsset::Tilemap)] = LoadTextureFromImage(image);
-    Image player_image = LoadImage("assets/player_sprite/2_walk.png");
-    textures[static_cast<int>(TextureAsset::Player)] = LoadTextureFromImage(player_image);    
-    UnloadImage(image);
+    image = LoadImage("assets/player_sprite/2_walk.png");
+    textures[static_cast<int>(TextureAsset::Player)] = LoadTextureFromImage(image);   
+    image = LoadImage("assets/dungeon_pack/tileset/Dungeon_Tileset.png");
+    textures[static_cast<int>(TextureAsset::Dungeon)] = LoadTextureFromImage(image);
 
+
+    UnloadImage(image);
     // randomly pick tiles in world
     for (int i = 0; i < WORLD_WIDTH; ++i) {
         for (int j = 0; j < WORLD_HEIGHT; ++j) {
@@ -39,6 +43,7 @@ void Game::Startup() {
     orc = {
         5 * TILE_WIDTH, 5 * TILE_HEIGHT, Zone::World,true, false, 100, 0, 0, GetRandomValue(10, 100)
     };
+    enemy = Mob(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT );
 
     chest = { 0 };
 
@@ -78,12 +83,13 @@ void Game::Update() {
         };
 
         // Add to projectiles list
-        projectiles.push_back(newProjectile);
+        player_projectiles.push_back(newProjectile);
     }
-
-    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
-    [](const Projectile& p) { return !p.active; }), projectiles.end());
-    //remove_projectiles()
+    // Remove projectiles
+    // player_projectiles.erase(std::remove_if(player_projectiles.begin(), player.projectiles.end(),
+    // [](const Projectile& p) { return !p.active; }), player_projectiles.end());
+    remove_projectiles(player_projectiles);
+    remove_projectiles(enemy_projectiles);
 
 
     bool hasKeyBeenPressed = false;
@@ -101,12 +107,6 @@ void Game::Update() {
     if (IsKeyPressed(KEY_UP)) { y -= TILE_HEIGHT; hasKeyBeenPressed = true; }
     if (IsKeyPressed(KEY_DOWN)) { y += TILE_HEIGHT; hasKeyBeenPressed = true; }
 
-//       float wheel = GetMouseWheelMove();
-//        if (wheel != 0) {
-//            camera.zoom += wheel * 0.125f;
-//            camera.zoom = Clamp(camera.zoom, 3.0f, 8.0f);
-//        }
-
     int wx = x / TILE_WIDTH;
     int wy = y / TILE_HEIGHT;
 
@@ -118,15 +118,23 @@ void Game::Update() {
         x = player.x;
         y = player.y;
     }
+    if (enemy.isAlive) 
+    {
+        if (!combatTextTimer.isActive) {
+            enemy.random_move();
+            //TraceLog(LOG_INFO, "2. Position: x=%f, y=%f", enemy.x, enemy.y);
+            enemy_projectiles.push_back(enemy.attack(player.x, player.y));
+            combatTextTimer.Start(0.50);
+        }
+
+        else if (enemy.health <= 0)
+        {
+            audio.play_sound(SoundAsset::Death);
+            enemy.isAlive = false;
+        }
+    }
 
     if (player.zone == orc.zone && orc.isAlive) {
-        /*int damage = GetRandomValue(2, 20);
-        orc.health += damage;
-        orc.damage = damage;
-
-        if (!combatTextTimer.isActive) {
-            combatTextTimer.Start(0.50);
-        }*/
 
         if (orc.health <= 0) 
         {
@@ -150,18 +158,21 @@ void Game::Update() {
                     case 3: mob_move_y = -TILE_HEIGHT; break;
                     case 4: mob_move_y = TILE_HEIGHT; break;
                 }
-                Tile target_tile = world[(orc.x + mob_move_x) / TILE_WIDTH][(orc.y + mob_move_y) / TILE_HEIGHT];
-                if (target_tile.type != TileType::Boundary) {
+                Tile target_tile = world[int(orc.x + mob_move_x) / TILE_WIDTH][int(orc.y + mob_move_y) / TILE_HEIGHT];
+                
+                if (target_tile.type != TileType::Boundary) 
+                {
                     // TraceLog(LOG_INFO, "1. Position: x=%f, y=%f", x, y);
                     orc.x += mob_move_x;
                     orc.y += mob_move_y;
                 }
-                // if (orc.x + mob_move_x < wall_width * TILE_WIDTH) {
-                //     camera_x = bound * TILE_WIDTH;
-                // }
-                // if (orc.x + mob_move_x < wall_width * TILE_WIDTH) {
-                //     camera_x = bound * TILE_WIDTH;
-                // }
+                
+                Vector2 direction = Vector2Normalize(Vector2Subtract(Vector2{x,y}, Vector2{0,0}));
+
+                // Create new projectile
+                //Projectile newProjectile = {Vector2{0,0}, direction, projectileSpeed, true};
+
+                //projectiles.push_back(newProjectile);
             }
 
         }
@@ -227,11 +238,15 @@ void Game::Update() {
     }
 
     // Update projectiles
-    for (auto& projectile : projectiles) {
+    for (auto& projectile : player_projectiles) {
         update_projectile(projectile);
     }
-    collisions(projectiles, orc);
+    for (auto& projectile : enemy_projectiles) {
+        update_projectile(projectile);
+    }
     
+    collisions(player_projectiles, enemy);
+    //collisions(enemy_projectiles, player);
 }
 
 void Game::Render() {
@@ -243,29 +258,42 @@ void Game::Render() {
             int tx = 4, ty = 4;
 
             switch (tile.type) {
-                case TileType::Grass: tx = 6; ty = 0; break;
-                case TileType::Tree:  tx = 5; ty = 2; break;
-                case TileType::Dirt:  tx = 2; ty = 0; break;
+                case TileType::Grass: tx = 2; ty = 2; break;
+                case TileType::Tree:  tx = 3; ty = 2; break;
+                case TileType::Dirt:  tx = 3; ty = 3; break;
             default: break;
                 
             }
             // set boundary on map
-            if (i < 3 || j < 3 || i >(WORLD_WIDTH - 4) || j >(WORLD_HEIGHT - 4)) {
+            if (i < 1 || j < 1 || i >(WORLD_WIDTH - 2) || j >(WORLD_HEIGHT - 2)) {
                 world[i][j] = Tile{ i, j, TileType::Boundary };
-                tx = 0; ty = 13;
+                tx = 0; ty = 1;
+            }
+            if (j < 1){
+                world[i][j] = Tile{ i, j, TileType::Boundary };
+                tx = 1; ty = 0;
+            }
+            if (j >(WORLD_HEIGHT - 2)) {
+                world[i][j] = Tile{ i, j, TileType::Boundary };
+                tx = 1; ty = 4;
             }
             DrawTile(tile.x * TILE_WIDTH, tile.y * TILE_HEIGHT, tx, ty);
+            //DrawTile(tile.x * TILE_WIDTH, tile.y * TILE_HEIGHT, 0, 1);
         }
     }
 
-    DrawTile(dungeon_gate.x, dungeon_gate.y, 3, 3);
+    DrawTile(dungeon_gate.x, dungeon_gate.y, 9, 4);
 
     if (orc.zone == player.zone) {
-        if (orc.isAlive) DrawTile(orc.x, orc.y, 25, 8);
+        if (orc.isAlive) DrawTile(orc.x, orc.y, 9, 9);
         if (combatTextTimer.isActive){
             DrawText(TextFormat("%d", orc.damage), orc.x, orc.y - 10, 9, YELLOW);
         }
         if (chest.isAlive) DrawTile(chest.x, chest.y, 9, 3);
+    }
+
+    if (enemy.isAlive) {
+        DrawTile(enemy.getX(), enemy.getY(), 0, 9);
     }
 
 
@@ -286,9 +314,26 @@ void Game::Render() {
     }
 
     // Draw projectiles
-    for (const auto& projectile : projectiles) {
-        if (projectile.active) {
+    for (const auto& projectile : player_projectiles) {
+        //TraceLog(LOG_INFO, "Projectile : x=%f, y=%f", projectile.position.x, projectile.position.y);
+
+        if (projectile.active) 
+        {
+            // Draw the projectile
+            //TraceLog(LOG_INFO, "Projectile position: x=%f, y=%f", projectile.position.x, projectile.position.y);
             DrawCircleV(projectile.position, projectileRadius, RED);
+        }
+    }
+
+        // Draw projectiles
+    for (const auto& projectile : enemy_projectiles) {
+        //TraceLog(LOG_INFO, "Projectile : x=%f, y=%f", projectile.position.x, projectile.position.y);
+
+        if (projectile.active) 
+        {
+            // Draw the projectile
+            //TraceLog(LOG_INFO, "Projectile position: x=%f, y=%f", projectile.position.x, projectile.position.y);
+            DrawCircleV(projectile.position, projectileRadius, BLUE);
         }
     }
 
@@ -325,7 +370,7 @@ void Game::DrawTile(int pos_x, int pos_y, int texture_index_x, int texture_index
         static_cast<float>(TILE_WIDTH),
         static_cast<float>(TILE_HEIGHT)
     };
-    DrawTexturePro(textures[static_cast<int>(TextureAsset::Tilemap)], source, dest, { 0,0 }, 0, WHITE);
+    DrawTexturePro(textures[static_cast<int>(TextureAsset::Dungeon)], source, dest, { 0,0 }, 0, WHITE);
 }
 
 void Game::DrawPlayerTile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip) {
