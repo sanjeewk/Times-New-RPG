@@ -54,6 +54,8 @@ void Game::Update() {
     float x = protagonist.x;
     float y = protagonist.y;
 
+
+
     Vector2 mouseScreen = GetMousePosition();
     Vector2 mousePos = GetScreenToWorld2D(mouseScreen, camera);
 
@@ -67,12 +69,7 @@ void Game::Update() {
         Vector2 direction = Vector2Normalize(Vector2Subtract(mousePos, Vector2{x+8,y+8}));
 
         // Create new projectile
-        Projectile newProjectile = {
-            Vector2{x+8,y+8},
-            direction,
-            projectileSpeed,
-            true
-        };
+        Projectile newProjectile = { Vector2{x+8,y+8}, direction, projectileSpeed, true };
 
         // Add to projectiles list
         player_projectiles.push_back(newProjectile);
@@ -84,18 +81,18 @@ void Game::Update() {
 
     bool hasKeyBeenPressed = false;
 
-    if (IsKeyPressed(KEY_LEFT))
+    if (IsKeyPressed(KEY_A))
     { 
         x -= TILE_WIDTH; 
         hasKeyBeenPressed = true; 
     }
-    if (IsKeyPressed(KEY_RIGHT))
+    if (IsKeyPressed(KEY_D))
     { 
         x += TILE_WIDTH; 
         hasKeyBeenPressed = true; 
     }
-    if (IsKeyPressed(KEY_UP)) { y -= TILE_HEIGHT; hasKeyBeenPressed = true; }
-    if (IsKeyPressed(KEY_DOWN)) { y += TILE_HEIGHT; hasKeyBeenPressed = true; }
+    if (IsKeyPressed(KEY_W)) { y -= TILE_HEIGHT; hasKeyBeenPressed = true; }
+    if (IsKeyPressed(KEY_S)) { y += TILE_HEIGHT; hasKeyBeenPressed = true; }
 
     int wx = x / TILE_WIDTH;
     int wy = y / TILE_HEIGHT;
@@ -114,7 +111,7 @@ void Game::Update() {
             enemy.random_move();
             //TraceLog(LOG_INFO, "2. Position: x=%f, y=%f", enemy.x, enemy.y);
             enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
-            combatTextTimer.Start(0.50);
+            combatTextTimer.Start(1.0);
         }
 
         else if (enemy.health <= 0)
@@ -192,7 +189,7 @@ void Game::Update() {
     }
     
     collisions(player_projectiles, enemy);
-    //collisions(enemy_projectiles, player);
+    collisions(enemy_projectiles, protagonist);
 }
 
 void Game::Render() {
@@ -281,11 +278,11 @@ void Game::Render() {
 
     //DrawRectangle(5, 5, 330, 140, Fade(SKYBLUE, 1.0f));
     DrawRectangleLines(5, 5, 330, 120, BLUE);
-    DrawText(TextFormat("Camera Target: (%06.2f, %06.2f", camera.target.x, camera.target.y), 15, 10, 14, YELLOW);
+    DrawText(TextFormat("Camera Target: %06.2f, %06.2f", camera.target.x, camera.target.y), 15, 10, 14, YELLOW);
     DrawText(TextFormat("Camera Zoom: %06.2f", camera.zoom), 15, 30, 14, YELLOW);
     DrawText(TextFormat("Player Health: %d", protagonist.health), 15, 50, 14, YELLOW);
     DrawText(TextFormat("Player Money: %d", protagonist.money), 15, 90, 14, YELLOW);
-    DrawText(TextFormat("player x y: %d %d", protagonist.x/16, protagonist.y/16), 15, 110, 14, YELLOW);
+    DrawText(TextFormat("player x y: %06.2f, %06.2f", protagonist.x, protagonist.y), 15, 110, 14, YELLOW);
 }
 
 void Game::Shutdown() {
