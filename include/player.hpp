@@ -1,9 +1,11 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#include "entity.hpp"
+
 enum class Zone { All, World, Dungeon };
 
-struct Entity {
+struct Object {
     float x;
     float y;
     Zone zone;
@@ -16,12 +18,12 @@ struct Entity {
 };
 
 
-class Player {
+class Player : public Entity{
     public:
         int health;
         Vector2 position;
-        int x;
-        int y;
+        float x;
+        float y;
         Zone zone;
 
         bool isAlive;
