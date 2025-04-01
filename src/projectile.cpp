@@ -24,7 +24,7 @@ void update_projectile(Projectile& projectile) {
 }
 
 // projectile collisions
-void collisions(std::vector<Projectile>& projectiles, Mob& enemy) {
+void collisions(std::vector<Projectile>& projectiles, Entity& enemy) {
 
     for (Projectile& projectile : projectiles) {
         //static_cast<float>(enemy.x), static_cast<float>(enemy.x)

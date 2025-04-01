@@ -6,6 +6,7 @@
 
 #include "raylib.h"
 #include "raymath.h"
+#include "entity.hpp"
 
 //#include "mob.hpp"
 //#include "player.hpp"
@@ -31,7 +32,7 @@ struct Projectile
     bool active;
 };
 
-void collisions(std::vector<Projectile>& projectiles, Mob& enemy);
+void collisions(std::vector<Projectile>& projectiles, Entity& enemy);
 void update_projectile(Projectile& projectile);
 void remove_projectiles(std::vector<Projectile>& projectiles);
 
