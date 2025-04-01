@@ -32,14 +32,9 @@ void Game::Startup() {
         }
     }
 
-    player = {
-        12 * TILE_WIDTH, 6 * TILE_HEIGHT, Zone::World, true,false, 100, 0, 1000, 0
-    };
     Player protagonist = Player(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT, Zone::World);
 
-    dungeon_gate = { 
-        10 * TILE_WIDTH, 10 * TILE_HEIGHT, Zone::All, false,true, 0,0,0,0
-    };
+    dungeon_gate = { 10 * TILE_WIDTH, 10 * TILE_HEIGHT, Zone::All, false,true, 0,0,0,0 };
     enemy = Mob(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT );
 
     chest = { 0 };
@@ -288,8 +283,8 @@ void Game::Render() {
     DrawRectangleLines(5, 5, 330, 120, BLUE);
     DrawText(TextFormat("Camera Target: (%06.2f, %06.2f", camera.target.x, camera.target.y), 15, 10, 14, YELLOW);
     DrawText(TextFormat("Camera Zoom: %06.2f", camera.zoom), 15, 30, 14, YELLOW);
-    DrawText(TextFormat("Player Health: %d", player.health), 15, 50, 14, YELLOW);
-    DrawText(TextFormat("Player Money: %d", player.money), 15, 90, 14, YELLOW);
+    DrawText(TextFormat("Player Health: %d", protagonist.health), 15, 50, 14, YELLOW);
+    DrawText(TextFormat("Player Money: %d", protagonist.money), 15, 90, 14, YELLOW);
     DrawText(TextFormat("player x y: %d %d", protagonist.x/16, protagonist.y/16), 15, 110, 14, YELLOW);
 }
 

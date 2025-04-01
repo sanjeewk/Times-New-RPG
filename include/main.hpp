@@ -53,9 +53,9 @@ class Game {
         Tile dungeon[WORLD_WIDTH][WORLD_HEIGHT];
         Camera2D camera;
     
-        Entity player;
-        Entity dungeon_gate;
-        Entity chest;
+        //Entity player;
+        Object dungeon_gate;
+        Object chest;
 
         Mob enemy;
         Player protagonist;

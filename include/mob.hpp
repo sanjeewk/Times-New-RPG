@@ -6,24 +6,24 @@
 
 #include "display.hpp"
 #include "projectile.hpp"
+#include "entity.hpp"
 
-class Mob{
+class Mob : public Entity {
 public:
     float x, y; // Position of the mob
     std::string name;
     int health;
     int attackPower;
-
-
     bool isAlive;
-    // costructor
+
+    // constructor
     Mob(int health, int attackPower, int startX, int startY) : health(health), attackPower(attackPower), x(startX), y(startY)
     {
         isAlive = true;
     }
 
     // Attack function
-    Projectile attack(float player_x, float player_y);
+    Projectile attack(float target_x, float target_y);
     
     // Move function
     void random_move();
