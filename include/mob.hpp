@@ -10,15 +10,18 @@
 
 class Mob : public Entity {
 public:
-    float x, y; // Position of the mob
+    // float x, y; // Position of the mob
     std::string name;
-    int health;
-    int attackPower;
-    bool isAlive;
+    // int health;
+    // int attackPower;
+    // bool isAlive;
 
     // constructor
-    Mob(int health, int attackPower, int startX, int startY) : health(health), attackPower(attackPower), x(startX), y(startY)
+    Mob(int health, int attackPower, int startX, int startY): 
+        Entity(health, attackPower, startX, startY), name("Mob") // Call base class constructor
     {
+        TraceLog(LOG_INFO, "Mob constructor called");
+        // Entity(health, attackPower, startX, startY)
         isAlive = true;
     }
 

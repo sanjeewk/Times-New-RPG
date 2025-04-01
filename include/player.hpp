@@ -20,24 +20,19 @@ struct Object {
 
 class Player : public Entity{
     public:
-        int health;
         Vector2 position;
-        float x;
-        float y;
         Zone zone;
-
-        bool isAlive;
-        bool isPassable;
 
         int damage;
         int money;
         int experience;
-        int attackPower;
-
 
         // costructor
-        Player(int health, int attackPower, int startX, int startY, Zone zone) : health(health), attackPower(attackPower), x(startX), y(startY), zone(zone)
+        Player(int health, int attackPower, int startX, int startY, Zone zone) : 
+            Entity(health, attackPower, startX, startY), zone(zone), money(0), experience(0)
         {
+            TraceLog(LOG_INFO, "Player constructor called");
+            // Entity(health, attackPower, startX, startY)
             isAlive = true;
         }
     

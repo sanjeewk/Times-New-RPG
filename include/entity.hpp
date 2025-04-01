@@ -12,11 +12,11 @@ public:
     int attackPower;
 
     Entity() = default; // Default constructor
-    Entity( int health, int attackPower, float startX, float startY) 
-        :  health(health), attackPower(attackPower), x(startX), y(startY), isAlive(true) {}
+   Entity(int health, int attackPower, float startX, float startY)
+       : health(health), attackPower(attackPower), x(startX), y(startY), isAlive(true) {};
 
 
-    virtual Projectile attack(float target_x, float target_y) = 0;
+    //virtual Projectile attack(float target_x, float target_y) = 0;
 
     virtual void random_move() = 0;
 };
