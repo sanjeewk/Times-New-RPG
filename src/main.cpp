@@ -1,6 +1,6 @@
 #include "main.hpp"
 
-Game::Game(): enemy(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT)
+Game::Game() : enemy(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT), protagonist(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT, Zone::World)
 {
     camera.target = { 0, 0 };
     camera.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
@@ -35,6 +35,7 @@ void Game::Startup() {
     player = {
         12 * TILE_WIDTH, 6 * TILE_HEIGHT, Zone::World, true,false, 100, 0, 1000, 0
     };
+    Player protagonist = Player(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT, Zone::World);
 
     dungeon_gate = { 
         10 * TILE_WIDTH, 10 * TILE_HEIGHT, Zone::All, false,true, 0,0,0,0
@@ -48,15 +49,15 @@ void Game::Startup() {
 }
 
 void Game::Update() {
-    if (player.zone == Zone::World) {
+    if (protagonist.zone == Zone::World) {
         audio.update_music(MusicAsset::LightAmbience);
     }
-    else if (player.zone == Zone::Dungeon) {
+    else if (protagonist.zone == Zone::Dungeon) {
         audio.update_music(MusicAsset::DarkAmbience);
     }
 
-    float x = player.x;
-    float y = player.y;
+    float x = protagonist.x;
+    float y = protagonist.y;
 
     Vector2 mouseScreen = GetMousePosition();
     Vector2 mousePos = GetScreenToWorld2D(mouseScreen, camera);
@@ -81,9 +82,7 @@ void Game::Update() {
         // Add to projectiles list
         player_projectiles.push_back(newProjectile);
     }
-    // Remove projectiles
-    // player_projectiles.erase(std::remove_if(player_projectiles.begin(), player.projectiles.end(),
-    // [](const Projectile& p) { return !p.active; }), player_projectiles.end());
+    // Remove unused projectiles
     remove_projectiles(player_projectiles);
     remove_projectiles(enemy_projectiles);
 
@@ -106,20 +105,20 @@ void Game::Update() {
     int wx = x / TILE_WIDTH;
     int wy = y / TILE_HEIGHT;
 
-    Tile target_tile = (player.zone == Zone::World) ? world[wx][wy] : dungeon[wx][wy];
+    Tile target_tile = (protagonist.zone == Zone::World) ? world[wx][wy] : dungeon[wx][wy];
 
     // do not allow players to move to pass the boundary
     if (target_tile.type == TileType::Boundary) {
         // TraceLog(LOG_INFO, "1. Position: x=%f, y=%f", x, y);
-        x = player.x;
-        y = player.y;
+        x = protagonist.x;
+        y = protagonist.y;
     }
     if (enemy.isAlive) 
     {
         if (!combatTextTimer.isActive) {
             enemy.random_move();
             //TraceLog(LOG_INFO, "2. Position: x=%f, y=%f", enemy.x, enemy.y);
-            enemy_projectiles.push_back(enemy.attack(player.x, player.y));
+            enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
             combatTextTimer.Start(0.50);
         }
 
@@ -132,56 +131,55 @@ void Game::Update() {
 
     
     if (hasKeyBeenPressed) {
-        SoundAsset sound = (player.zone == Zone::World) ? SoundAsset::FootGrass : SoundAsset::FootStone;
+        SoundAsset sound = (protagonist.zone == Zone::World) ? SoundAsset::FootGrass : SoundAsset::FootStone;
         audio.play_sound(sound);
     }
-
     
-    player.x = x;
-    player.y = y;
+    protagonist.x = x;
+    protagonist.y = y;
     int camera_x = x;
     int camera_y = y;
-    camera.target = { static_cast<float>(player.x), static_cast<float>(player.y) };
-    //std::cout << "player x" << player.x << std::endl;
+    camera.target = { x, y };   
+    //std::cout << "player x" << protagonist.x << std::endl;
     
     // variable camera control
-    if (player.x < bound * TILE_WIDTH) {
+    if (protagonist.x < bound * TILE_WIDTH) {
         camera_x = bound * TILE_WIDTH;
     }
-    else if (player.x > (TILE_WIDTH * (WORLD_WIDTH - bound))) {
+    else if (protagonist.x > (TILE_WIDTH * (WORLD_WIDTH - bound))) {
         camera_x = (WORLD_WIDTH - bound) * TILE_WIDTH;
     }
-    if (player.y < bound * TILE_HEIGHT) {
+    if (protagonist.y < bound * TILE_HEIGHT) {
         camera_y = bound * TILE_HEIGHT;
     }
-    else if (player.y > (TILE_HEIGHT * (WORLD_HEIGHT - bound))) {
+    else if (protagonist.y > (TILE_HEIGHT * (WORLD_HEIGHT - bound))) {
         camera_y = (WORLD_HEIGHT - bound) * TILE_HEIGHT;
     }
     camera.target = { static_cast<float>(camera_x), static_cast<float>(camera_y) };
 
-    /* else if (player.y < 2) {
-        camera.target = { static_cast<float>(player.x), static_cast<float>(3)};
+    /* else if (protagonist.y < 2) {
+        camera.target = { static_cast<float>(protagonist.x), static_cast<float>(3)};
     }
     else {
-        camera.target = { static_cast<float>(player.x), static_cast<float>(player.y) };
+        camera.target = { static_cast<float>(protagonist.x), static_cast<float>(protagonist.y) };
     }*/
 
 
-    if (IsKeyPressed(KEY_E) && player.x == dungeon_gate.x && player.y == dungeon_gate.y) {
-        if (player.zone == Zone::World) {
-            player.zone = Zone::Dungeon;
+    if (IsKeyPressed(KEY_E) && protagonist.x == dungeon_gate.x && protagonist.y == dungeon_gate.y) {
+        if (protagonist.zone == Zone::World) {
+            protagonist.zone = Zone::Dungeon;
             audio.stop_music(MusicAsset::LightAmbience);
             audio.play_music(MusicAsset::DarkAmbience);
         }
         else {
-            player.zone = Zone::World;
+            protagonist.zone = Zone::World;
             audio.stop_music(MusicAsset::DarkAmbience);
             audio.play_music(MusicAsset::LightAmbience);
         }
     }
 
-    if (IsKeyPressed(KEY_G) && player.x == chest.x && player.y == chest.y && chest.isAlive) {
-        player.money += chest.money;
+    if (IsKeyPressed(KEY_G) && protagonist.x == chest.x && protagonist.y == chest.y && chest.isAlive) {
+        protagonist.money += chest.money;
         audio.play_sound(SoundAsset::Coins);
         chest.isAlive = false;
     }
@@ -199,7 +197,7 @@ void Game::Update() {
     }
     
     collisions(player_projectiles, enemy);
-    collisions(enemy_projectiles, player);
+    //collisions(enemy_projectiles, player);
 }
 
 void Game::Render() {
@@ -207,7 +205,7 @@ void Game::Render() {
 
     for (int i = 0; i < WORLD_WIDTH; ++i) {
         for (int j = 0; j < WORLD_HEIGHT; ++j) {
-            Tile tile = (player.zone == Zone::World) ? world[i][j] : dungeon[i][j];
+            Tile tile = (protagonist.zone == Zone::World) ? world[i][j] : dungeon[i][j];
             int tx = 4, ty = 4;
 
             switch (tile.type) {
@@ -254,10 +252,10 @@ void Game::Render() {
     }
     // Draw player sprite
     if (player_sprite_toggle == 0){
-        DrawPlayerTile(player.x, player.y, 0, 1);
+        DrawPlayerTile(protagonist.x, protagonist.y, 0, 1);
     }
     else{
-        DrawPlayerTile(player.x, player.y, 0, 3);
+        DrawPlayerTile(protagonist.x, protagonist.y, 0, 3);
     }
 
     // Draw projectiles
@@ -292,7 +290,7 @@ void Game::Render() {
     DrawText(TextFormat("Camera Zoom: %06.2f", camera.zoom), 15, 30, 14, YELLOW);
     DrawText(TextFormat("Player Health: %d", player.health), 15, 50, 14, YELLOW);
     DrawText(TextFormat("Player Money: %d", player.money), 15, 90, 14, YELLOW);
-    DrawText(TextFormat("player x y: %d %d", player.x/16, player.y/16), 15, 110, 14, YELLOW);
+    DrawText(TextFormat("player x y: %d %d", protagonist.x/16, protagonist.y/16), 15, 110, 14, YELLOW);
 }
 
 void Game::Shutdown() {

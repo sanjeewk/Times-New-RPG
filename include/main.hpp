@@ -58,6 +58,7 @@ class Game {
         Entity chest;
 
         Mob enemy;
+        Player protagonist;
     
         Timer combatTextTimer;
         Timer playerTimer;

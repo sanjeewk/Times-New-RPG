@@ -30,8 +30,28 @@ class Player {
         int damage;
         int money;
         int experience;
+        int attackPower;
 
-        // int move(int x, int y);
+
+        // costructor
+        Player(int health, int attackPower, int startX, int startY, Zone zone) : health(health), attackPower(attackPower), x(startX), y(startY), zone(zone)
+        {
+            isAlive = true;
+        }
+    
+        // Attack function
+        Projectile attack(float player_x, float player_y);
+        
+        // Move function
+        void random_move();
+        
+        // Getters for position
+        int getX();
+        int getY();
+        
+        // Reduce health
+        void takeDamage(int damage);
+            
 };
 
 #endif
