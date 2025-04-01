@@ -24,7 +24,7 @@ void update_projectile(Projectile& projectile) {
 }
 
 // projectile collisions
-void collisions(std::vector<Projectile>& projectiles, Mob enemy) {
+void collisions(std::vector<Projectile>& projectiles, Mob& enemy) {
 
     for (Projectile& projectile : projectiles) {
         //static_cast<float>(enemy.x), static_cast<float>(enemy.x)
@@ -33,6 +33,7 @@ void collisions(std::vector<Projectile>& projectiles, Mob enemy) {
             projectile.active = false;
             // Handle enemy hit
             TraceLog(LOG_INFO, "Collisions");
+            TraceLog(LOG_INFO, "health: %d", enemy.health);
             enemy.health -= 10;
 
         }

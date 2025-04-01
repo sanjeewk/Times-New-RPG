@@ -31,7 +31,7 @@ struct Projectile
     bool active;
 };
 
-void collisions(std::vector<Projectile>& projectiles, Mob enemy);
+void collisions(std::vector<Projectile>& projectiles, Mob& enemy);
 void update_projectile(Projectile& projectile);
 void remove_projectiles(std::vector<Projectile>& projectiles);
 
