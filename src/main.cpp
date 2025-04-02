@@ -108,10 +108,10 @@ void Game::Update() {
     if (enemy.isAlive) 
     {
         if (!combatTextTimer.isActive) {
-            enemy.random_move();
+            enemy.random_move(world);
             //TraceLog(LOG_INFO, "2. Position: x=%f, y=%f", enemy.x, enemy.y);
             enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
-            combatTextTimer.Start(1.0);
+            combatTextTimer.Start(0.5);
         }
 
         else if (enemy.health <= 0)
@@ -250,29 +250,10 @@ void Game::Render() {
         DrawPlayerTile(protagonist.x, protagonist.y, 0, 3);
     }
 
+
     // Draw projectiles
-    for (const auto& projectile : player_projectiles) {
-        //TraceLog(LOG_INFO, "Projectile : x=%f, y=%f", projectile.position.x, projectile.position.y);
-
-        if (projectile.active) 
-        {
-            // Draw the projectile
-            //TraceLog(LOG_INFO, "Projectile position: x=%f, y=%f", projectile.position.x, projectile.position.y);
-            DrawCircleV(projectile.position, projectileRadius, RED);
-        }
-    }
-
-        // Draw projectiles
-    for (const auto& projectile : enemy_projectiles) {
-        //TraceLog(LOG_INFO, "Projectile : x=%f, y=%f", projectile.position.x, projectile.position.y);
-
-        if (projectile.active) 
-        {
-            // Draw the projectile
-            //TraceLog(LOG_INFO, "Projectile position: x=%f, y=%f", projectile.position.x, projectile.position.y);
-            DrawCircleV(projectile.position, projectileRadius, BLUE);
-        }
-    }
+    draw_projectiles(player_projectiles);
+    draw_projectiles(enemy_projectiles);
 
     EndMode2D();
 

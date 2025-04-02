@@ -42,13 +42,13 @@ public:
 
 class Game {
     private:
-        static constexpr int MAX_TEXTURES = 3;
-        static constexpr int WORLD_WIDTH = 20;
-        static constexpr int WORLD_HEIGHT = 18;
+        // static constexpr int MAX_TEXTURES = 3;
+        // static constexpr int WORLD_WIDTH = 20;
+        // static constexpr int WORLD_HEIGHT = 18;
     
         std::array<Texture2D, MAX_TEXTURES> textures;
     
-    // world stored in this 2D arry
+    // world stored in this 2D array
         Tile world[WORLD_WIDTH][WORLD_HEIGHT];
         Tile dungeon[WORLD_WIDTH][WORLD_HEIGHT];
         Camera2D camera;
@@ -70,10 +70,7 @@ class Game {
     
         std::vector<Projectile> player_projectiles;
         std::vector<Projectile> enemy_projectiles;
-        std::vector<Mob> enemies;
-
-        const float projectileRadius = 2.0f;
-    
+        std::vector<Mob> enemies;    
     
     public:
         Game();

@@ -41,7 +41,19 @@ void collisions(std::vector<Projectile>& projectiles, Entity& enemy) {
 }
 
 // remove inactive projectiles
-void remove_projectiles(std::vector<Projectile>& projectiles){
+void remove_projectiles(std::vector<Projectile>& projectiles)
+{
    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
    [](const Projectile& p) { return !p.active; }), projectiles.end());
+}
+
+void draw_projectiles(std::vector<Projectile>& projectiles)
+{
+    for (const auto& projectile : projectiles)
+    {
+        if (projectile.active)
+        {
+            DrawCircleV(projectile.position, projectileRadius, BLUE);
+        }
+    }
 }
