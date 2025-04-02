@@ -17,7 +17,7 @@ Projectile Mob::attack(float target_x, float target_y)
 }
 
 // Move function
-void Mob::random_move() {
+void Mob::random_move(Tile world[20][18]) {
     int movement = GetRandomValue(1, 4);
     int mob_move_x = 0;            
     int mob_move_y = 0;
@@ -28,8 +28,22 @@ void Mob::random_move() {
         case 3: mob_move_y = -TILE_HEIGHT; break;
         case 4: mob_move_y = TILE_HEIGHT; break;
     }
+
     x += mob_move_x;
     y += mob_move_y;
+
+    int wx = x / TILE_WIDTH;
+    int wy = y / TILE_HEIGHT;
+
+    Tile target_tile = world[wx][wy]; 
+
+    // do not allow players to move to pass the boundary
+    if (target_tile.type == TileType::Boundary) {
+        
+        TraceLog(LOG_INFO, "move not allowed x=%f, y=%f", x, y);
+        x -= mob_move_x;
+        y -= mob_move_y;
+    }
 
 }
 

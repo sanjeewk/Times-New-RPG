@@ -40,7 +40,7 @@ class Player : public Entity{
         Projectile attack(float player_x, float player_y);
         
         // Move function
-        void random_move();
+        void random_move(Tile world[20][18]);
         
         // Getters for position
         int getX();

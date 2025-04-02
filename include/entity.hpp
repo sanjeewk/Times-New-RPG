@@ -3,6 +3,7 @@
 #define ENTITY_HPP
 
 #include "projectile.hpp"
+#include "display.hpp"
 
 class Entity {
 public:
@@ -18,7 +19,7 @@ public:
 
     //virtual Projectile attack(float target_x, float target_y) = 0;
 
-    virtual void random_move() = 0;
+    virtual void random_move(Tile world[20][18]) = 0;
 };
 
 #endif

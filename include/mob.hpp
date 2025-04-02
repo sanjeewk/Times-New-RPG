@@ -7,6 +7,7 @@
 #include "display.hpp"
 #include "projectile.hpp"
 #include "entity.hpp"
+#include "display.hpp"
 
 class Mob : public Entity {
 public:
@@ -29,7 +30,7 @@ public:
     Projectile attack(float target_x, float target_y);
     
     // Move function
-    void random_move();
+    void random_move(Tile world[20][18]);
     
     // Getters for position
     int getX();

@@ -17,7 +17,7 @@ Projectile Player::attack(float target_x, float target_y)
 }
 
 // Move function
-void Player::random_move() {
+void Player::random_move(Tile world[20][18]) {
     int movement = GetRandomValue(1, 4);
     int mob_move_x = 0;            
     int mob_move_y = 0;
