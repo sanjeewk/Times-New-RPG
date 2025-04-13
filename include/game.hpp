@@ -10,6 +10,7 @@
 #include "projectile.hpp"
 #include "player.hpp"
 #include "mob.hpp"
+#include "qlearning.hpp"
 
 
 enum class GameState {Pause, Game};
@@ -57,8 +58,9 @@ class Game {
         Object dungeon_gate;
         Object chest;
 
-        Mob enemy;
+        
         Player protagonist;
+        QLearningAgent agent;
     
         Timer combatTextTimer;
         Timer playerTimer;
@@ -73,13 +75,15 @@ class Game {
         std::vector<Mob> enemies;    
     
     public:
+        Mob enemy;
         Game();
     
         void Startup();
     
         void Update();
-    
-        void Render();
+        void update_qlearning();
+        void reset();
+        void render();
     
         void Shutdown();    
     // private:
