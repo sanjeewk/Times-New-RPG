@@ -13,7 +13,7 @@
 
 class Mob;
 
-const float projectileSpeed = 5.0f;
+const float projectileSpeed = 3.0f;
 const float projectileRadius = 2.0f;
 
 enum class ProjectileType
@@ -28,12 +28,12 @@ struct Projectile
 {
     Vector2 position;
     Vector2 direction;
-    //ProjectileType type;
     float speed;
     bool active;
+    ProjectileType type;
 };
 
-void collisions(std::vector<Projectile>& projectiles, Entity& enemy);
+bool collisions(std::vector<Projectile>& projectiles, Entity& enemy);
 void update_projectile(Projectile& projectile);
 void remove_projectiles(std::vector<Projectile>& projectiles);
 void draw_projectiles(std::vector<Projectile>& projectiles);

@@ -24,20 +24,22 @@ void update_projectile(Projectile& projectile) {
 }
 
 // projectile collisions
-void collisions(std::vector<Projectile>& projectiles, Entity& enemy) {
-
+bool collisions(std::vector<Projectile>& projectiles, Entity& target) {
+    bool collision = false;
     for (Projectile& projectile : projectiles) {
-        //static_cast<float>(enemy.x), static_cast<float>(enemy.x)
+        //static_cast<float>(target.x), static_cast<float>(target.x)
 
-        if (CheckCollisionCircles(projectile.position, 8.0f, Vector2{ enemy.x, enemy.y}, 8.0f)) {
+        if (CheckCollisionCircles(projectile.position, 8.0f, Vector2{ target.x, target.y}, 8.0f)) {
             projectile.active = false;
-            // Handle enemy hit
+            // Handle target hit
             TraceLog(LOG_INFO, "Collisions");
-            TraceLog(LOG_INFO, "health: %d", enemy.health);
-            enemy.health -= 10;
+            TraceLog(LOG_INFO, "health: %d", target.health);
+            target.health -= 10;
+            collision = true;
 
         }
     }
+    return collision;
 }
 
 // remove inactive projectiles
@@ -53,7 +55,14 @@ void draw_projectiles(std::vector<Projectile>& projectiles)
     {
         if (projectile.active)
         {
-            DrawCircleV(projectile.position, projectileRadius, BLUE);
+            if (projectile.type == ProjectileType::BULLET)
+            {
+                DrawCircleV(projectile.position, projectileRadius, BLUE);
+            }
+            else
+            {
+                DrawCircleV(projectile.position, projectileRadius, RED);
+            }
         }
     }
 }
