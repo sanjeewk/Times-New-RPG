@@ -41,14 +41,8 @@ class Player : public Entity{
         
         // Move function
         void random_move(Tile world[20][18]);
-        
-        // Getters for position
-        int getX();
-        int getY();
-        
-        // Reduce health
-        void takeDamage(int damage);
-            
+        void move(Action action, Tile world[20][18]);
+             
 };
 
 #endif
