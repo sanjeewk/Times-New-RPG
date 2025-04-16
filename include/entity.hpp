@@ -4,6 +4,7 @@
 
 #include "projectile.hpp"
 #include "display.hpp"
+#include "Qlearning.hpp"
 
 class Entity {
 public:
@@ -11,6 +12,7 @@ public:
     bool isAlive;
     int health;
     int attackPower;
+    int state_x, state_y;
 
     Entity() = default; // Default constructor
    Entity(int health, int attackPower, float startX, float startY)

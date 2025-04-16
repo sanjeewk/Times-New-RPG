@@ -23,6 +23,17 @@ struct State {
             enemy_x == other.enemy_x && enemy_y == other.enemy_y &&
             enemy_health == other.enemy_health;
     }
+
+    // Add this for std::map compatibility
+    bool operator<(const State& other) const {
+        // Compare fields in order of importance
+        if (agent_x != other.agent_x) return agent_x < other.agent_x;
+        if (agent_y != other.agent_y) return agent_y < other.agent_y;
+        if (enemy_x != other.enemy_x) return enemy_x < other.enemy_x;
+        if (enemy_y != other.enemy_y) return enemy_y < other.enemy_y;
+        return enemy_health < other.enemy_health;
+    }
+
 };
 
 enum Action {
@@ -36,16 +47,19 @@ enum Action {
 
 class QLearningAgent {
 private:
-    std::map<State, std::array<float, 4>> q_table;
+    std::map<State, std::array<float, 5>> q_table;
     float alpha = 0.1f; // Learning rate
     float gamma = 0.9f; // Discount factor
     float epsilon = 0.2f; // Exploration rate
     std::mt19937 rng;
+    
 
 public:
+    int episode = 0;
     QLearningAgent() : rng(std::random_device{}()) {}
 
-    Action chooseAction(const State& state) {
+    Action chooseAction(const State& state) 
+    {
         std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
         // Explore (random action)

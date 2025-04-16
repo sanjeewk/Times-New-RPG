@@ -1,4 +1,4 @@
-#include "main.hpp"
+#include "game.hpp"
 
 Game::Game() : enemy(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT), protagonist(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT, Zone::World)
 {
