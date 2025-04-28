@@ -5,6 +5,7 @@ Audio::Audio() {
 	load_sounds();
 }
 
+// load sounds
 void Audio::load_sounds() {
 	sounds[static_cast<int>(SoundAsset::FootGrass)] = LoadSound("assets/Grass1.wav");
 	sounds[static_cast<int>(SoundAsset::FootStone)] = LoadSound("assets/Concrete1.wav");

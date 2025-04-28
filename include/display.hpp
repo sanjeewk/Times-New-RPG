@@ -10,7 +10,8 @@ constexpr int WORLD_HEIGHT = 18;
 
 enum class TileType { Dirt, Grass, Tree, Boundary };
 
-struct Tile {
+struct Tile 
+{
     int x;
     int y;
     TileType type;

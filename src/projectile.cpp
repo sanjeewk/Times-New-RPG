@@ -7,9 +7,7 @@
 constexpr int scWidth = 1100;
 constexpr int scHeight = 950;
 
-// Projectile structure
-
-
+// update projectile position based on speed and direction 
 void update_projectile(Projectile& projectile) {
     if (projectile.active) {
         projectile.position = Vector2Add(projectile.position,
@@ -49,6 +47,7 @@ void remove_projectiles(std::vector<Projectile>& projectiles)
    [](const Projectile& p) { return !p.active; }), projectiles.end());
 }
 
+// Draw projectiles on tile map based on type
 void draw_projectiles(std::vector<Projectile>& projectiles)
 {
     for (const auto& projectile : projectiles)

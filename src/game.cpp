@@ -7,12 +7,14 @@ Game::Game() : enemy(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT), protagonist(100, 
     camera.rotation = 0.0f;
     camera.zoom = 3.7f;
     QLearningAgent agent;
+    training = true;
+    count = 0;
 }
 
 // load assets and initialize game state
-void Game::Startup() {
-    
-// enable sound output
+void Game::Startup() 
+{    
+    // enable sound output
     InitAudioDevice();
     audio = Audio();
     Image image = LoadImage("assets/bit_packed.png");
@@ -218,7 +220,12 @@ void Game::update_qlearning()
     }
     else
     {
-        protagonist.move(action, world);
+        bool result = protagonist.move(action, world);
+        if(!result){
+            // large penalty if move is not possible
+            TraceLog(LOG_INFO, "illegal move!!!!!!!!!!!!!!!!!!!!");
+            reward -=10000;
+        }
 
     }
 
@@ -232,21 +239,21 @@ void Game::update_qlearning()
     camera.target = { x, y };
 
     // random move for MOB
-    if (!combatTextTimer.isActive)
-    {
-        int move = GetRandomValue(1, 2);
-        
-        TraceLog(LOG_INFO, "enemy");
-        if (move == 1) {
-            enemy.random_move(world);
-        }
-        else if (move == 2) {
-            TraceLog(LOG_INFO, "attack");
-            enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
-        }
-        combatTextTimer.Start(0.5);
-    }
 
+    int move = GetRandomValue(1, 10);
+    
+    TraceLog(LOG_INFO, "enemy-----------------------------------");
+    if (move <10) {
+        enemy.random_move(world);
+        count +=1;
+    }
+    else if (move == 11) {
+        TraceLog(LOG_INFO, "attack");
+        count -=1;
+        enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
+    }
+    
+    TraceLog(LOG_INFO, "enemy move %d", count);
     //TraceLog(LOG_INFO, "2. Position: x=%f, y=%f", enemy.x, enemy.y);
 
     // Update projectiles
@@ -261,7 +268,6 @@ void Game::update_qlearning()
     {
         reward += 10.0f;
     }
-    
     if (collisions(enemy_projectiles, protagonist))
     {
         reward -= 10.0f;
@@ -274,6 +280,14 @@ void Game::update_qlearning()
         reward += 100.0f;
     }
 
+    if (protagonist.health <= 0)
+    {
+        audio.play_sound(SoundAsset::Death);
+        reward -= 100.0f;
+    }
+
+    reward -= 0.1f;
+
     State new_state = {
         static_cast<int>(protagonist.x / TILE_WIDTH),
         static_cast<int>(protagonist.y / TILE_HEIGHT),
@@ -282,13 +296,9 @@ void Game::update_qlearning()
         enemy.health
     };
     // lower reward to encourage efficiency
-    reward -= 0.1f;
+
 
     agent.updateQValue(current_state, action, reward, new_state);
-
-    if (combatTextTimer.IsDone()) {
-        combatTextTimer.isActive = false;
-    }
 
 }
 
@@ -310,13 +320,15 @@ void Game::reset()
     enemy.health = 100;
     enemy.isAlive = true;
 
+    protagonist.health = 100;
     // // Reset camera
     // camera.target = { protagonist.x, protagonist.y };
 
 
 }
 
-void Game::render() {
+void Game::render() 
+{
     BeginMode2D(camera);
 
     for (int i = 0; i < WORLD_WIDTH; ++i) {
@@ -390,14 +402,16 @@ void Game::render() {
     DrawText(TextFormat("player x y: %06.2f, %06.2f", protagonist.x, protagonist.y), 15, 110, 14, YELLOW);
 }
 
-void Game::Shutdown() {
+void Game::Shutdown() 
+{
     for (auto& texture : textures) UnloadTexture(texture);
     audio.shutdown_audio();
     CloseAudioDevice();
 }
 
-// private:
-void Game::DrawTile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip) {
+// Draw tile from tile assets
+void Game::DrawTile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip) 
+{
     Rectangle source = {
         static_cast<float>(TILE_WIDTH * texture_index_x),
         static_cast<float>(TILE_HEIGHT * texture_index_y),
@@ -413,7 +427,8 @@ void Game::DrawTile(int pos_x, int pos_y, int texture_index_x, int texture_index
     DrawTexturePro(textures[static_cast<int>(TextureAsset::Dungeon)], source, dest, { 0,0 }, 0, WHITE);
 }
 
-void Game::DrawPlayerTile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip) {
+void Game::DrawPlayerTile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip) 
+{
     Rectangle source = {
         static_cast<float>(TILE_WIDTH * texture_index_x),
         static_cast<float>(TILE_HEIGHT * texture_index_y),
@@ -430,7 +445,8 @@ void Game::DrawPlayerTile(int pos_x, int pos_y, int texture_index_x, int texture
 }
 
 
-int main() {
+int main() 
+{
     InitWindow(screenWidth, screenHeight, "Raylib 2D RPG");
     SetTargetFPS(60);
 
@@ -439,12 +455,18 @@ int main() {
 
     while (!WindowShouldClose()) {
         //game.Update();
-        game.update_qlearning();
-        if (game.enemy.health <=0 )
-        {
-            game.reset();
-        }
+        if (game.training) {
 
+            game.update_qlearning();
+            if (game.enemy.health <=0 )
+            {
+                game.reset();
+            }
+        }
+        else {
+            game.Update();
+        }
+        
         BeginDrawing();
         ClearBackground(BLACK);
         game.render();

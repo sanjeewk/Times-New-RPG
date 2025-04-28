@@ -16,8 +16,9 @@ Projectile Mob::attack(float target_x, float target_y)
     //return 3;
 }
 
-// Move function
-void Mob::random_move(Tile world[20][18]) {
+// Move radnomly in 1 of 4 directions
+void Mob::random_move(Tile world[20][18]) 
+{
     int movement = GetRandomValue(1, 4);
     int mob_move_x = 0;            
     int mob_move_y = 0;
@@ -52,7 +53,8 @@ int Mob::getX()  { return x; }
 int Mob::getY()  { return y; }
 
 // Reduce health
-void Mob::takeDamage(int damage) {
+void Mob::takeDamage(int damage) 
+{
     health -= damage;
     if (health < 0) health = 0;
 }

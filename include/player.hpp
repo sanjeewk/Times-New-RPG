@@ -5,7 +5,8 @@
 
 enum class Zone { All, World, Dungeon };
 
-struct Object {
+struct Object 
+{
     float x;
     float y;
     Zone zone;
@@ -18,7 +19,8 @@ struct Object {
 };
 
 
-class Player : public Entity{
+class Player : public Entity
+{
     public:
         Vector2 position;
         Zone zone;
@@ -41,7 +43,7 @@ class Player : public Entity{
         
         // Move function
         void random_move(Tile world[20][18]);
-        void move(Action action, Tile world[20][18]);
+        bool move(Action action, Tile world[20][18]);
              
 };
 

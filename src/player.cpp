@@ -16,7 +16,8 @@ Projectile Player::attack(float target_x, float target_y)
 }
 
 // Move function
-void Player::random_move(Tile world[20][18]) {
+void Player::random_move(Tile world[20][18]) 
+{
     int movement = GetRandomValue(1, 4);
     int move_x = 0;            
     int move_y = 0;
@@ -29,11 +30,11 @@ void Player::random_move(Tile world[20][18]) {
     }
     x += move_x;
     y += move_y;
-
 }
 
-void Player::move(Action action, Tile world[20][18]){
-    //Execute action
+// execute action or return false if not possible
+bool Player::move(Action action, Tile world[20][18])
+{
     int move_x = 0;
     int move_y = 0;
     switch (action) 
@@ -65,7 +66,10 @@ void Player::move(Action action, Tile world[20][18]){
         TraceLog(LOG_INFO, "move not allowed x=%f, y=%f", x, y);
         x -= move_x;
         y -= move_y;
+        return false;
     }
+
+    return true;
     //case FIRE_PROJECTILE:
 
 }

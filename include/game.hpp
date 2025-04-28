@@ -19,33 +19,36 @@ enum class TextureAsset { Tilemap, Player, Dungeon };
 // function to get if coordinates are outside the bound
 // enemy class
 
-class Timer {
-public:
-    double startTime = 0;
-    double lifeTime = 0;
-    bool isActive = false;
+class Timer 
+{
+    public:
+        double startTime = 0;
+        double lifeTime = 0;
+        bool isActive = false;
 
-    void Start(double lifetime) {
-        startTime = GetTime();
-        lifeTime = lifetime;
-        isActive = true;
-    }
+        void Start(double lifetime) {
+            startTime = GetTime();
+            lifeTime = lifetime;
+            isActive = true;
+        }
 
-    bool IsDone() const {
-        return GetTime() - startTime >= lifeTime;
-    }
+        bool IsDone() const {
+            return GetTime() - startTime >= lifeTime;
+        }
 
-    double GetElapsed() const {
-        return GetTime() - startTime;
-    }
+        double GetElapsed() const {
+            return GetTime() - startTime;
+        }
 
 };
 
-class Game {
+class Game 
+{
     private:
         // static constexpr int MAX_TEXTURES = 3;
         // static constexpr int WORLD_WIDTH = 20;
         // static constexpr int WORLD_HEIGHT = 18;
+
     
         std::array<Texture2D, MAX_TEXTURES> textures;
     
@@ -75,6 +78,8 @@ class Game {
         std::vector<Mob> enemies;    
     
     public:
+        bool training;
+        int count;
         Mob enemy;
         Game();
     
