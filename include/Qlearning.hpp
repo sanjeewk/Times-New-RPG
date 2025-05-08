@@ -8,6 +8,8 @@
 #include <map>
 #include <array>
 
+// #include "load_qtable.hpp"
+
 const int GRID_SIZE = 20;
 const int CELL_SIZE = 30;
 const int SCREEN_WIDTH = GRID_SIZE * CELL_SIZE;
@@ -50,17 +52,17 @@ enum Action
 class QLearningAgent 
 {
     private:
-        std::map<State, std::array<float, 5>> q_table;
-        float alpha = 0.1f; // Learning rate
-        float gamma = 0.9f; // Discount factor
-        float epsilon = 0.2f; // Exploration rate
-        std::mt19937 rng;
         
+        float alpha = 0.4f; // Learning rate
+        float gamma = 0.9f; // Discount factor
+        float epsilon = 0.3f; // Exploration rate
+        std::mt19937 rng;
 
     public:
+        std::map<State, std::array<float, 5>> q_table;
         int episode = 0;
-        QLearningAgent() : rng(std::random_device{}()) {}
-
+        // QLearningAgent() : rng(std::random_device{}()) {}
+        QLearningAgent();
         Action chooseAction(const State& state) 
         {
             std::uniform_real_distribution<float> dist(0.0f, 1.0f);
@@ -68,6 +70,7 @@ class QLearningAgent
             // Explore (random action)
             if (dist(rng) < epsilon) 
             {
+                //TraceLog(LOG_INFO, "explore");
                 return static_cast<Action>(std::uniform_int_distribution<int>(0, ACTION_COUNT - 1)(rng));
             }
 
@@ -82,4 +85,5 @@ class QLearningAgent
             float max_future_value = *std::max_element(q_table[new_state].begin(), q_table[new_state].end());
             old_value = old_value + alpha * (reward + gamma * max_future_value - old_value);
         }
+
 };

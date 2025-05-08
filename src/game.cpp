@@ -1,4 +1,5 @@
 #include "game.hpp"
+#include "load_qtable.hpp"
 
 Game::Game() : enemy(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT), protagonist(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT, Zone::World)
 {
@@ -208,7 +209,7 @@ void Game::update_qlearning()
     };
     // receive action from agent
     Action action = agent.chooseAction(current_state);
-    TraceLog(LOG_INFO, "agent");
+    //TraceLog(LOG_INFO, "agent");
     if (action == FIRE_PROJECTILE) 
     {
         audio.play_sound(SoundAsset::Laser);
@@ -221,11 +222,10 @@ void Game::update_qlearning()
     else
     {
         bool result = protagonist.move(action, world);
-        if(!result){
-            // large penalty if move is not possible
-            TraceLog(LOG_INFO, "illegal move!!!!!!!!!!!!!!!!!!!!");
-            reward -=10000;
-        }
+        // if(!result){
+        //     // large penalty if move is not possible
+        //     TraceLog(LOG_INFO, "illegal move!!!!!!!!!!!!!!!!!!!!");
+        // }
 
     }
 
@@ -300,18 +300,29 @@ void Game::update_qlearning()
 
     agent.updateQValue(current_state, action, reward, new_state);
 
+    //saveBinary(agent.q_table, "assets/qtable.txt");
+
 }
 
 void Game::reset()
 {
     agent.episode++;
     // Reset player position
-    protagonist.x = 5 * TILE_WIDTH;
-    protagonist.y = 5 * TILE_HEIGHT;
+    std::srand(std::time(0));
+    
+    // Generate two random numbers for reset coordinates
+    int rand_x = (std::rand() % 14) + 2;
+    int rand_y = (std::rand() % 14) + 2;
+
+    protagonist.x = rand_x * TILE_WIDTH;
+    protagonist.y = rand_y * TILE_HEIGHT;
 
     // Reset enemy position
-    enemy.x = 10 * TILE_WIDTH;
-    enemy.y = 10 * TILE_HEIGHT;
+    rand_x = (std::rand() % 14) + 2;
+    rand_y = (std::rand() % 14) + 2;
+
+    enemy.x = rand_x * TILE_WIDTH;
+    enemy.y = rand_y * TILE_HEIGHT;
 
     // Reset projectiles
     player_projectiles.clear();

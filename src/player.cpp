@@ -64,8 +64,14 @@ bool Player::move(Action action, Tile world[20][18])
     if (target_tile.type == TileType::Boundary) {
         
         TraceLog(LOG_INFO, "move not allowed x=%f, y=%f", x, y);
-        x -= move_x;
-        y -= move_y;
+        if (move_x != 0)
+        {
+            x -= move_x*2;
+        }
+        else
+        {
+            y -= move_y*2;
+        }
         return false;
     }
 
