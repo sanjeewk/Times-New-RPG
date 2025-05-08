@@ -13,7 +13,7 @@
 
 class Mob;
 
-const float projectileSpeed = 3.0f;
+const float projectileSpeed = 6.0f;
 const float projectileRadius = 2.0f;
 
 enum class ProjectileType
