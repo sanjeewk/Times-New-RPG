@@ -112,10 +112,30 @@ void Game::Update()
     if (enemy.isAlive) 
     {
         if (!combatTextTimer.isActive) {
-            enemy.random_move(world);
+            //enemy.random_move(world);
             //TraceLog(LOG_INFO, "2. Position: x=%f, y=%f", enemy.x, enemy.y);
-            enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
+            // enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
             combatTextTimer.Start(0.5);
+
+            State current_state = {
+                static_cast<int>(protagonist.x / TILE_WIDTH),
+                static_cast<int>(protagonist.y / TILE_HEIGHT),
+                static_cast<int>(enemy.x / TILE_WIDTH),
+                static_cast<int>(enemy.y / TILE_HEIGHT),
+                enemy.health
+            };
+            Action action = agent.getBestAction(current_state);
+            //TraceLog(LOG_INFO, "agent");
+            if (action == FIRE_PROJECTILE) 
+            {
+                audio.play_sound(SoundAsset::Laser);
+                enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
+            }
+            else
+            {
+                bool result = enemy.move(action, world);
+            }
+
         }
 
         else if (enemy.health <= 0)
@@ -267,26 +287,26 @@ void Game::update_qlearning()
 
     if (collisions(player_projectiles, enemy))
     {
-        reward += 10.0f;
+        reward -= 10.0f;
     }
     if (collisions(enemy_projectiles, protagonist))
     {
-        reward -= 10.0f;
+        reward += 10.0f;
     }
-
 
     if (enemy.health <= 0)
-    {
-        audio.play_sound(SoundAsset::Death);
-        reward += 100.0f;
-    }
-
-    if (protagonist.health <= 0)
     {
         audio.play_sound(SoundAsset::Death);
         reward -= 100.0f;
     }
 
+    if (protagonist.health <= 0)
+    {
+        audio.play_sound(SoundAsset::Death);
+        reward += 100.0f;
+    }
+
+    // lower reward to encourage efficiency
     reward -= 0.1f;
 
     State new_state = {
@@ -296,12 +316,10 @@ void Game::update_qlearning()
         static_cast<int>(enemy.y / TILE_HEIGHT),
         enemy.health
     };
-    // lower reward to encourage efficiency
-
 
     agent.updateQValue(current_state, action, reward, new_state);
 
-    //saveBinary(agent.q_table, "assets/qtable.txt");
+    agent.savetoBinary(agent.q_table, "assets/qtable.txt");
 
 }
 
