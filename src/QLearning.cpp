@@ -7,9 +7,8 @@
 #include <tuple>
 
 
-
 // Save to binary file
-void savetoBinary(const std::map<State, std::array<float, 5>>& q_table,
+void QLearningAgent::savetoBinary(const std::map<State, std::array<float, 5>>& q_table,
     const std::string& filename) {
     std::ofstream file(filename, std::ios::binary);
     if (!file) {
@@ -33,7 +32,7 @@ void savetoBinary(const std::map<State, std::array<float, 5>>& q_table,
 }
 
 // Load from binary file
-std::map<State, std::array<float, 5>> loadQTaable(const std::string& filename) {
+std::map<State, std::array<float, 5>> QLearningAgent::loadQTable(const std::string& filename) {
     std::ifstream file(filename, std::ios::binary);
     if (!file) {
         throw std::runtime_error("Cannot open file for reading");
@@ -66,5 +65,7 @@ std::map<State, std::array<float, 5>> loadQTaable(const std::string& filename) {
 
 QLearningAgent::QLearningAgent() : rng(std::random_device{}()) {
     // Initialize Q-table with zeros
-    q_table = loadQTaable("assets/qtable.txt");
+    q_table = loadQTable("assets/qtable.txt");
+    std::cout << "Q-learning agent initialized with empty Q-table." << std::endl;
+
 }

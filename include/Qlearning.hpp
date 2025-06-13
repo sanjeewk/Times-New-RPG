@@ -54,7 +54,7 @@ class QLearningAgent
     private:
         
         float alpha = 0.4f; // Learning rate
-        float gamma = 0.9f; // Discount factor
+        float gamma = 0.6f; // Discount factor
         float epsilon = 0.3f; // Exploration rate
         std::mt19937 rng;
 
@@ -63,6 +63,9 @@ class QLearningAgent
         int episode = 0;
         // QLearningAgent() : rng(std::random_device{}()) {}
         QLearningAgent();
+        std::map<State, std::array<float, 5>> loadQTable(const std::string& filename);
+        void savetoBinary(const std::map<State, std::array<float, 5>>& q_table, const std::string& filename);
+
         Action chooseAction(const State& state) 
         {
             std::uniform_real_distribution<float> dist(0.0f, 1.0f);
@@ -84,6 +87,13 @@ class QLearningAgent
             float& old_value = q_table[state][action];
             float max_future_value = *std::max_element(q_table[new_state].begin(), q_table[new_state].end());
             old_value = old_value + alpha * (reward + gamma * max_future_value - old_value);
+        }
+
+        Action getBestAction(const State& state) 
+        {
+            auto& actions = q_table[state];
+            return static_cast<Action>(std::distance(actions.begin(),
+                std::max_element(actions.begin(), actions.end())));
         }
 
 };
