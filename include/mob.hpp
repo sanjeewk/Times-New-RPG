@@ -31,6 +31,7 @@ public:
     
     // Move function
     void random_move(Tile world[20][18]);
+    bool move(Action action, Tile world[20][18]);
     
     // Getters for position
     int getX();

@@ -213,15 +213,16 @@ void Game::update_qlearning()
     if (action == FIRE_PROJECTILE) 
     {
         audio.play_sound(SoundAsset::Laser);
-        Vector2 direction = Vector2Normalize(Vector2Subtract(Vector2{enemy.x, enemy.y}, Vector2{ protagonist.x + 8,protagonist.y + 8 }));
-        // Create new projectile
-        Projectile newProjectile = { Vector2{protagonist.x + 8, protagonist.y + 8}, direction, projectileSpeed, true, ProjectileType::FIREBALL};
-        // Add to projectiles list
-        player_projectiles.push_back(newProjectile);
+        // Vector2 direction = Vector2Normalize(Vector2Subtract(Vector2{enemy.x, enemy.y}, Vector2{ protagonist.x + 8,protagonist.y + 8 }));
+        // // Create new projectile
+        // Projectile newProjectile = { Vector2{protagonist.x + 8, protagonist.y + 8}, direction, projectileSpeed, true, ProjectileType::FIREBALL};
+        // // Add to projectiles list
+        // player_projectiles.push_back(newProjectile);
+        enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
     }
     else
     {
-        bool result = protagonist.move(action, world);
+        bool result = enemy.move(action, world);
         // if(!result){
         //     // large penalty if move is not possible
         //     TraceLog(LOG_INFO, "illegal move!!!!!!!!!!!!!!!!!!!!");
@@ -242,18 +243,18 @@ void Game::update_qlearning()
 
     int move = GetRandomValue(1, 10);
     
-    TraceLog(LOG_INFO, "enemy-----------------------------------");
-    if (move <10) {
-        enemy.random_move(world);
+    // TraceLog(LOG_INFO, "enemy-----------------------------------");
+    if (move <9) {
+        protagonist.random_move(world);
         count +=1;
     }
-    else if (move == 11) {
+    else if (move == 10) {
         TraceLog(LOG_INFO, "attack");
         count -=1;
-        enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
+        player_projectiles.push_back(protagonist.attack(enemy.x, enemy.y));
     }
     
-    TraceLog(LOG_INFO, "enemy move %d", count);
+    // TraceLog(LOG_INFO, "enemy move %d", count);
     //TraceLog(LOG_INFO, "2. Position: x=%f, y=%f", enemy.x, enemy.y);
 
     // Update projectiles
@@ -409,6 +410,7 @@ void Game::render()
     DrawText(TextFormat("Camera Target: %06.2f, %06.2f", camera.target.x, camera.target.y), 15, 10, 14, YELLOW);
     DrawText(TextFormat("Camera Zoom: %06.2f", camera.zoom), 15, 30, 14, YELLOW);
     DrawText(TextFormat("Player Health: %d", protagonist.health), 15, 50, 14, YELLOW);
+    DrawText(TextFormat("Enemy Health: %d", enemy.health), 15, 70, 14, YELLOW);
     DrawText(TextFormat("Player Money: %d", protagonist.money), 15, 90, 14, YELLOW);
     DrawText(TextFormat("player x y: %06.2f, %06.2f", protagonist.x, protagonist.y), 15, 110, 14, YELLOW);
 }
@@ -454,7 +456,6 @@ void Game::DrawPlayerTile(int pos_x, int pos_y, int texture_index_x, int texture
     };
     DrawTexturePro(textures[static_cast<int>(TextureAsset::Player)], source, dest, { 0,0 }, 0, WHITE);
 }
-
 
 int main() 
 {

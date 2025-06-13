@@ -30,6 +30,19 @@ void Player::random_move(Tile world[20][18])
     }
     x += move_x;
     y += move_y;
+
+    int wx = x / TILE_WIDTH;
+    int wy = y / TILE_HEIGHT;
+
+    Tile target_tile = world[wx][wy]; 
+
+    // do not allow players to move to pass the boundary
+    if (target_tile.type == TileType::Boundary) {
+        
+        TraceLog(LOG_INFO, "move not allowed x=%f, y=%f", x, y);
+        x -= move_x;
+        y -= move_y;
+    }
 }
 
 // execute action or return false if not possible
