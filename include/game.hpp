@@ -13,7 +13,7 @@
 #include "qlearning.hpp"
 
 
-enum class GameState {Pause, Game};
+enum class GameState {Menu, Game, Pause};
 enum class TextureAsset { Tilemap, Player, Dungeon };
 
 // function to get if coordinates are outside the bound
@@ -49,7 +49,6 @@ class Game
         // static constexpr int WORLD_WIDTH = 20;
         // static constexpr int WORLD_HEIGHT = 18;
 
-    
         std::array<Texture2D, MAX_TEXTURES> textures;
     
     // world stored in this 2D array
@@ -61,12 +60,11 @@ class Game
         Object dungeon_gate;
         Object chest;
 
-        
-        Player protagonist;
         QLearningAgent agent;
     
         Timer combatTextTimer;
         Timer playerTimer;
+        GameState game_state;
     
         Audio audio;
         int player_sprite_toggle = 0;
@@ -81,14 +79,16 @@ class Game
         bool training;
         int count;
         Mob enemy;
+        Player protagonist;
         Game();
     
         void Startup();
-    
+        void menu();
         void Update();
         void update_qlearning();
         void reset();
         void render();
+        void check_state();
     
         void Shutdown();    
     // private:

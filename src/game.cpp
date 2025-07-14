@@ -1,20 +1,21 @@
 #include "game.hpp"
-#include "load_qtable.hpp"
 
 Game::Game() : enemy(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT), protagonist(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT, Zone::World)
-{
+{  
+    GameState game_state = GameState::Menu;
     camera.target = { 0, 0 };
     camera.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
     camera.rotation = 0.0f;
     camera.zoom = 3.7f;
     QLearningAgent agent;
-    training = true;
+    training = false; // set to true to enable training mode
     count = 0;
 }
 
 // load assets and initialize game state
 void Game::Startup() 
 {    
+    game_state = GameState::Menu;
     // enable sound output
     InitAudioDevice();
     audio = Audio();
@@ -47,6 +48,53 @@ void Game::Startup()
     audio.play_music(MusicAsset::LightAmbience); 
 }
 
+void Game::check_state() {
+
+    if(game_state == GameState::Menu) {
+        menu();
+        TraceLog(LOG_INFO, "Game is menu");
+        return;
+    }
+    else if (game_state == GameState::Pause)
+    {
+        TraceLog(LOG_INFO, "Game is paused");
+        return; 
+    }
+    else if (game_state == GameState::Game) {
+        Update();
+        TraceLog(LOG_INFO, "Game is running");
+    }
+    
+}
+
+void Game::menu() {
+    // Implement menu logic here
+    // For example, display menu options and handle user input
+    TraceLog(LOG_INFO, "Menu state is active");
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    // PlaySound(sounds[static_cast<int>(SoundAsset::Laser)]);
+            audio.play_sound(SoundAsset::Laser);
+            Vector2 mouseScreen = GetMousePosition();
+            Vector2 mousePos = GetScreenToWorld2D(mouseScreen, camera);
+            game_state = GameState::Game; // Change to game state
+
+            DrawRectangleLines(50, 50, 330, 120, BLUE);
+            DrawText(TextFormat("Camera Target: %06.2f, %06.2f", camera.target.x, camera.target.y), 15, 10, 14, YELLOW);
+            DrawText(TextFormat("Camera Zoom: %06.2f", camera.zoom), 15, 30, 14, YELLOW);
+            DrawText(TextFormat("Player Health: %d", protagonist.health), 15, 50, 14, YELLOW);
+            DrawText(TextFormat("Enemy Health: %d", enemy.health), 15, 70, 14, YELLOW);
+            DrawText(TextFormat("Player Money: %d", protagonist.money), 15, 90, 14, YELLOW);
+            DrawText(TextFormat("player x y: %06.2f, %06.2f", protagonist.x, protagonist.y), 15, 110, 14, YELLOW);
+
+            // Check if the mouse is clicked on the start button
+            if (mousePos.x >= 100 && mousePos.x <= 200 && mousePos.y >= 100 && mousePos.y <= 150) {
+                game_state = GameState::Game; // Change to game state
+                TraceLog(LOG_INFO, "Starting game...");
+            }
+    }
+}
+
+
 void Game::Update() 
 {
     if (protagonist.zone == Zone::World) {
@@ -55,6 +103,9 @@ void Game::Update()
     else if (protagonist.zone == Zone::Dungeon) {
         audio.update_music(MusicAsset::DarkAmbience);
     }
+    // Remove unused projectiles
+    remove_projectiles(player_projectiles);
+    remove_projectiles(enemy_projectiles);
 
     float x = protagonist.x;
     float y = protagonist.y;
@@ -62,26 +113,18 @@ void Game::Update()
     Vector2 mouseScreen = GetMousePosition();
     Vector2 mousePos = GetScreenToWorld2D(mouseScreen, camera);
 
-    // Shoot when left mouse button is pressed
-
+    // Shoot projectile when left mouse button is pressed
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         // PlaySound(sounds[static_cast<int>(SoundAsset::Laser)]);
         audio.play_sound(SoundAsset::Laser);
-        //TraceLog(LOG_INFO, "mouse pressed x=%f, y=%f", mousePos.x, mousePos.y);
-        //TraceLog(LOG_INFO, "1. Position: x=%f, y=%f", x, y);
         Vector2 direction = Vector2Normalize(Vector2Subtract(mousePos, Vector2{x+8,y+8}));
 
-        // Create new projectile
+        // Create new projectile and add to list
         Projectile newProjectile = { Vector2{x+8,y+8}, direction, projectileSpeed, true, ProjectileType::FIREBALL };
-
-        // Add to projectiles list
         player_projectiles.push_back(newProjectile);
     }
-    // Remove unused projectiles
-    remove_projectiles(player_projectiles);
-    remove_projectiles(enemy_projectiles);
 
-
+    // record user input - move player with WASD keys
     bool hasKeyBeenPressed = false;
 
     if (IsKeyPressed(KEY_A))
@@ -94,8 +137,14 @@ void Game::Update()
         x += TILE_WIDTH; 
         hasKeyBeenPressed = true; 
     }
-    if (IsKeyPressed(KEY_W)) { y -= TILE_HEIGHT; hasKeyBeenPressed = true; }
-    if (IsKeyPressed(KEY_S)) { y += TILE_HEIGHT; hasKeyBeenPressed = true; }
+    if (IsKeyPressed(KEY_W)) 
+    { 
+        y -= TILE_HEIGHT; hasKeyBeenPressed = true; 
+    }
+    if (IsKeyPressed(KEY_S)) 
+    { 
+        y += TILE_HEIGHT; hasKeyBeenPressed = true; 
+    }
 
     int wx = x / TILE_WIDTH;
     int wy = y / TILE_HEIGHT;
@@ -124,11 +173,14 @@ void Game::Update()
                 static_cast<int>(enemy.y / TILE_HEIGHT),
                 enemy.health
             };
+            // get the best action from the agent
             Action action = agent.getBestAction(current_state);
             //TraceLog(LOG_INFO, "agent");
             if (action == FIRE_PROJECTILE) 
             {
                 audio.play_sound(SoundAsset::Laser);
+                TraceLog(LOG_INFO, "attack");
+
                 enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
             }
             else
@@ -225,14 +277,14 @@ void Game::update_qlearning()
         static_cast<int>(protagonist.y / TILE_HEIGHT),
         static_cast<int>(enemy.x / TILE_WIDTH),
         static_cast<int>(enemy.y / TILE_HEIGHT),
-        enemy.health
+        protagonist.health
     };
     // receive action from agent
     Action action = agent.chooseAction(current_state);
     //TraceLog(LOG_INFO, "agent");
     if (action == FIRE_PROJECTILE) 
     {
-        audio.play_sound(SoundAsset::Laser);
+        //audio.play_sound(SoundAsset::Laser);
         // Vector2 direction = Vector2Normalize(Vector2Subtract(Vector2{enemy.x, enemy.y}, Vector2{ protagonist.x + 8,protagonist.y + 8 }));
         // // Create new projectile
         // Projectile newProjectile = { Vector2{protagonist.x + 8, protagonist.y + 8}, direction, projectileSpeed, true, ProjectileType::FIREBALL};
@@ -319,7 +371,7 @@ void Game::update_qlearning()
 
     agent.updateQValue(current_state, action, reward, new_state);
 
-    agent.savetoBinary(agent.q_table, "assets/qtable.txt");
+    //agent.savetoBinary(agent.q_table, "assets/qtable.txt");
 
 }
 
@@ -431,6 +483,27 @@ void Game::render()
     DrawText(TextFormat("Enemy Health: %d", enemy.health), 15, 70, 14, YELLOW);
     DrawText(TextFormat("Player Money: %d", protagonist.money), 15, 90, 14, YELLOW);
     DrawText(TextFormat("player x y: %06.2f, %06.2f", protagonist.x, protagonist.y), 15, 110, 14, YELLOW);
+
+    if(game_state == GameState::Menu)
+    {
+        Texture2D texture = LoadTexture("assets/menu_screen.jpg");
+
+        // Rectangle on the screen where to draw the texture
+        Rectangle destRec = {0.0f, 0.0f, screenWidth, screenHeight};
+        
+        // Rectangle from the texture to draw (entire texture by default)
+        Rectangle sourceRec = {0.0f, 0.0f, (float)texture.width, (float)texture.height};
+        
+        // Draw the menu
+        DrawTexturePro(
+            texture, 
+            sourceRec, 
+            destRec, 
+            {0.0f, 0.0f}, // origin at the top-left corner
+            0.0f, 
+            WHITE
+        );
+    }
 }
 
 void Game::Shutdown() 
@@ -488,13 +561,13 @@ int main()
         if (game.training) {
 
             game.update_qlearning();
-            if (game.enemy.health <=0 )
+            if (game.enemy.health <=0 || game.protagonist.health <= 0) 
             {
                 game.reset();
             }
         }
         else {
-            game.Update();
+            game.check_state();
         }
         
         BeginDrawing();
