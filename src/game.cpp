@@ -19,7 +19,7 @@ void Game::Startup()
     // enable sound output
     InitAudioDevice();
     audio = Audio();
-    Image image = LoadImage("assets/bit_packed.png");
+    Image image = LoadImage("assets/sprites/bit_packed.png");
     textures[static_cast<int>(TextureAsset::Tilemap)] = LoadTextureFromImage(image);
 
     image = LoadImage("assets/player_sprite/2_walk.png");

@@ -7,15 +7,15 @@ Audio::Audio() {
 
 // load sounds
 void Audio::load_sounds() {
-	sounds[static_cast<int>(SoundAsset::FootGrass)] = LoadSound("assets/Grass1.wav");
-	sounds[static_cast<int>(SoundAsset::FootStone)] = LoadSound("assets/Concrete1.wav");
-	sounds[static_cast<int>(SoundAsset::Attack)] = LoadSound("assets/07_human_atk_sword_2.wav");
-	sounds[static_cast<int>(SoundAsset::Death)] = LoadSound("assets/24_orc_death_spin.wav");
-	sounds[static_cast<int>(SoundAsset::Coins)] = LoadSound("assets/handleCoins.ogg");
-	sounds[static_cast<int>(SoundAsset::Laser)] = LoadSound("assets/retro_laser.mp3");
+	sounds[static_cast<int>(SoundAsset::FootGrass)] = LoadSound("assets/sfx/Grass1.wav");
+	sounds[static_cast<int>(SoundAsset::FootStone)] = LoadSound("assets/sfx/Concrete1.wav");
+	sounds[static_cast<int>(SoundAsset::Attack)] = LoadSound("assets/sx/07_human_atk_sword_2.wav");
+	sounds[static_cast<int>(SoundAsset::Death)] = LoadSound("assets/sfx/24_orc_death_spin.wav");
+	sounds[static_cast<int>(SoundAsset::Coins)] = LoadSound("assets/sfx/handleCoins.ogg");
+	sounds[static_cast<int>(SoundAsset::Laser)] = LoadSound("assets/sfx/retro_laser.mp3");
 
-	music[static_cast<int>(MusicAsset::LightAmbience)] = LoadMusicStream("assets/light-ambience.mp3");
-	music[static_cast<int>(MusicAsset::DarkAmbience)] = LoadMusicStream("assets/dark-ambience.mp3");
+	music[static_cast<int>(MusicAsset::LightAmbience)] = LoadMusicStream("assets/tracks/light-ambience.mp3");
+	music[static_cast<int>(MusicAsset::DarkAmbience)] = LoadMusicStream("assets/tracks/dark-ambience.mp3");
 }
 
 // play sound
@@ -26,7 +26,6 @@ void Audio::play_sound(SoundAsset track) {
 // start a new music stream
 void Audio::play_music(MusicAsset track) {
 	PlayMusicStream(music[static_cast<int>(track)]);
-	
 }
 
 // load next chunk of music to buffer
