@@ -21,13 +21,18 @@ void Game::Startup()
     audio = Audio();
     Image image = LoadImage("assets/bit_packed.png");
     textures[static_cast<int>(TextureAsset::Tilemap)] = LoadTextureFromImage(image);
+
     image = LoadImage("assets/player_sprite/2_walk.png");
     textures[static_cast<int>(TextureAsset::Player)] = LoadTextureFromImage(image);   
+
     image = LoadImage("assets/dungeon_pack/tileset/Dungeon_Tileset.png");
     textures[static_cast<int>(TextureAsset::Dungeon)] = LoadTextureFromImage(image);
 
+    image = LoadImage("assets/sprites/hearts.png");
+    textures[static_cast<int>(TextureAsset::Hearts)] = LoadTextureFromImage(image);
 
     UnloadImage(image);
+
     // randomly pick tiles in world
     for (int i = 0; i < WORLD_WIDTH; ++i) {
         for (int j = 0; j < WORLD_HEIGHT; ++j) {
@@ -52,17 +57,17 @@ void Game::check_state() {
 
     if(game_state == GameState::Menu) {
         menu();
-        TraceLog(LOG_INFO, "Game is menu");
+        //TraceLog(LOG_INFO, "Game is menu");
         return;
     }
     else if (game_state == GameState::Pause)
     {
-        TraceLog(LOG_INFO, "Game is paused");
+        //TraceLog(LOG_INFO, "Game is paused");
         return; 
     }
     else if (game_state == GameState::Game) {
         Update();
-        TraceLog(LOG_INFO, "Game is running");
+        //TraceLog(LOG_INFO, "Game is running");
     }
     
 }
@@ -76,15 +81,7 @@ void Game::menu() {
             audio.play_sound(SoundAsset::Laser);
             Vector2 mouseScreen = GetMousePosition();
             Vector2 mousePos = GetScreenToWorld2D(mouseScreen, camera);
-            game_state = GameState::Game; // Change to game state
-
-            DrawRectangleLines(50, 50, 330, 120, BLUE);
-            DrawText(TextFormat("Camera Target: %06.2f, %06.2f", camera.target.x, camera.target.y), 15, 10, 14, YELLOW);
-            DrawText(TextFormat("Camera Zoom: %06.2f", camera.zoom), 15, 30, 14, YELLOW);
-            DrawText(TextFormat("Player Health: %d", protagonist.health), 15, 50, 14, YELLOW);
-            DrawText(TextFormat("Enemy Health: %d", enemy.health), 15, 70, 14, YELLOW);
-            DrawText(TextFormat("Player Money: %d", protagonist.money), 15, 90, 14, YELLOW);
-            DrawText(TextFormat("player x y: %06.2f, %06.2f", protagonist.x, protagonist.y), 15, 110, 14, YELLOW);
+            game_state = GameState::Game; // Change to game stat
 
             // Check if the mouse is clicked on the start button
             if (mousePos.x >= 100 && mousePos.x <= 200 && mousePos.y >= 100 && mousePos.y <= 150) {
@@ -180,14 +177,12 @@ void Game::Update()
             {
                 audio.play_sound(SoundAsset::Laser);
                 TraceLog(LOG_INFO, "attack");
-
                 enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
             }
             else
             {
                 bool result = enemy.move(action, world);
             }
-
         }
 
         else if (enemy.health <= 0)
@@ -196,7 +191,6 @@ void Game::Update()
             enemy.isAlive = false;
         }
     }
-
     
     if (hasKeyBeenPressed) {
         SoundAsset sound = (protagonist.zone == Zone::World) ? SoundAsset::FootGrass : SoundAsset::FootStone;
@@ -405,8 +399,6 @@ void Game::reset()
     protagonist.health = 100;
     // // Reset camera
     // camera.target = { protagonist.x, protagonist.y };
-
-
 }
 
 void Game::render() 
@@ -442,7 +434,6 @@ void Game::render()
             //DrawTile(tile.x * TILE_WIDTH, tile.y * TILE_HEIGHT, 0, 1);
         }
     }
-
     DrawTile(dungeon_gate.x, dungeon_gate.y, 9, 4);
 
     //DrawText(TextFormat("%d", orc.damage), orc.x, orc.y - 10, 9, YELLOW);
@@ -450,7 +441,6 @@ void Game::render()
     if (enemy.isAlive) {
         DrawTile(enemy.getX(), enemy.getY(), 0, 9);
     }
-
 
     if (!playerTimer.isActive) {
         playerTimer.Start(0.3);
@@ -468,21 +458,34 @@ void Game::render()
         DrawPlayerTile(protagonist.x, protagonist.y, 0, 3);
     }
 
-
     // Draw projectiles
     draw_projectiles(player_projectiles);
     draw_projectiles(enemy_projectiles);
 
     EndMode2D();
 
-    //DrawRectangle(5, 5, 330, 140, Fade(SKYBLUE, 1.0f));
-    DrawRectangleLines(5, 5, 330, 120, BLUE);
-    DrawText(TextFormat("Camera Target: %06.2f, %06.2f", camera.target.x, camera.target.y), 15, 10, 14, YELLOW);
-    DrawText(TextFormat("Camera Zoom: %06.2f", camera.zoom), 15, 30, 14, YELLOW);
-    DrawText(TextFormat("Player Health: %d", protagonist.health), 15, 50, 14, YELLOW);
-    DrawText(TextFormat("Enemy Health: %d", enemy.health), 15, 70, 14, YELLOW);
-    DrawText(TextFormat("Player Money: %d", protagonist.money), 15, 90, 14, YELLOW);
-    DrawText(TextFormat("player x y: %06.2f, %06.2f", protagonist.x, protagonist.y), 15, 110, 14, YELLOW);
+    DrawRectangle(0, 0, 1100, 75, Fade(GRAY, 0.5f));
+    // Health indicator
+    if(protagonist.health > 0) {
+        int hearts = protagonist.health/25;
+        for (int i = 0; i < hearts; ++i) {
+            DrawUITile(0 + i * 50, 0, 2, 0, 0, 4.0f);
+        }
+    }
+    else {
+        DrawText("You Died", 10, 10, 20, RED);
+    }
+    // DrawUITile(0, -5, 2, 0, 0, 4.0f);
+    // DrawUITile(50, -5, 2, 0, 0, 4.0f);
+    // DrawUITile(100, -5, 2, 0, 0, 4.0f);
+  
+    DrawRectangleLines(800, 0, 330, 150, BLUE);
+    DrawText(TextFormat("Camera Target: %06.2f, %06.2f", camera.target.x, camera.target.y), 820, 10, 14, YELLOW);
+    DrawText(TextFormat("Camera Zoom: %06.2f", camera.zoom), 820, 30, 14, YELLOW);
+    DrawText(TextFormat("Player Health: %d", protagonist.health), 820, 50, 14, YELLOW);
+    DrawText(TextFormat("Enemy Health: %d", enemy.health), 820, 70, 14, YELLOW);
+    DrawText(TextFormat("Player Money: %d", protagonist.money), 820, 90, 14, YELLOW);
+    DrawText(TextFormat("player x y: %06.2f, %06.2f", protagonist.x, protagonist.y), 820, 110, 14, YELLOW);
 
     if(game_state == GameState::Menu)
     {
@@ -504,6 +507,9 @@ void Game::render()
             WHITE
         );
     }
+
+    // DrawTile(, 0, 9);
+    // DrawTile(, 0, 9);
 }
 
 void Game::Shutdown() 
@@ -546,6 +552,23 @@ void Game::DrawPlayerTile(int pos_x, int pos_y, int texture_index_x, int texture
         static_cast<float>(TILE_HEIGHT)
     };
     DrawTexturePro(textures[static_cast<int>(TextureAsset::Player)], source, dest, { 0,0 }, 0, WHITE);
+}
+
+void Game::DrawUITile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip, float scale) 
+{
+    Rectangle source = {
+        static_cast<float>(TILE_WIDTH * texture_index_x),
+        static_cast<float>(TILE_HEIGHT * texture_index_y),
+        static_cast<float>(TILE_WIDTH),
+        static_cast<float>(TILE_HEIGHT)
+    };
+    Rectangle dest = {
+        static_cast<float>(pos_x),
+        static_cast<float>(pos_y),
+        static_cast<float>(TILE_WIDTH) * scale,
+        static_cast<float>(TILE_HEIGHT) * scale
+    };
+    DrawTexturePro(textures[static_cast<int>(TextureAsset::Hearts)], source, dest, { 0,0 }, 0, WHITE);
 }
 
 int main() 
