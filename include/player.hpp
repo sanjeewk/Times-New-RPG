@@ -29,22 +29,31 @@ class Player : public Entity
         int money;
         int experience;
 
-        // costructor
+        // Stamina mechanic
+        float stamina;
+        static constexpr float STAMINA_MAX = 60.0f;
+        static constexpr float STAMINA_REGEN = 0.05f;
+        static constexpr float STAMINA_MOVE_COST = 2.0f;
+        static constexpr float STAMINA_ATTACK_COST = 5.0f;
+
+        // constructor
         Player(int health, int attackPower, int startX, int startY, Zone zone) : 
             Entity(health, attackPower, startX, startY), zone(zone), money(0), experience(0)
         {
             TraceLog(LOG_INFO, "Player constructor called");
-            // Entity(health, attackPower, startX, startY)
             isAlive = true;
+            stamina = STAMINA_MAX; // Initialize stamina to max
         }
-    
+
+        // Regenerate stamina (call every time step)
+        void regenerate_stamina();
+
         // Attack function
         Projectile attack(float player_x, float player_y);
         
         // Move function
         void random_move(Tile world[20][18]);
         bool move(Action action, Tile world[20][18]);
-             
 };
 
 #endif

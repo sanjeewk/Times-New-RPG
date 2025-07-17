@@ -114,45 +114,36 @@ void Game::Update()
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         // PlaySound(sounds[static_cast<int>(SoundAsset::Laser)]);
         audio.play_sound(SoundAsset::Laser);
-        Vector2 direction = Vector2Normalize(Vector2Subtract(mousePos, Vector2{x+8,y+8}));
-
-        // Create new projectile and add to list
-        Projectile newProjectile = { Vector2{x+8,y+8}, direction, projectileSpeed, true, ProjectileType::FIREBALL };
-        player_projectiles.push_back(newProjectile);
+        player_projectiles.push_back(protagonist.attack(mousePos.x, mousePos.y));
     }
 
     // record user input - move player with WASD keys
     bool hasKeyBeenPressed = false;
-
     if (IsKeyPressed(KEY_A))
     { 
-        x -= TILE_WIDTH; 
+        // x -= TILE_WIDTH; 
+        protagonist.move(Action::MOVE_LEFT, world);
+        hasKeyBeenPressed = true;
+
+    }
+    else if (IsKeyPressed(KEY_D))
+    {
+        // x += TILE_WIDTH;
+        protagonist.move(Action::MOVE_RIGHT, world);
+        hasKeyBeenPressed = true;
+
+    }
+    else if (IsKeyPressed(KEY_W)) 
+    { 
+        // y -= TILE_HEIGHT; 
+        protagonist.move(Action::MOVE_UP, world);
         hasKeyBeenPressed = true; 
     }
-    if (IsKeyPressed(KEY_D))
-    { 
-        x += TILE_WIDTH; 
+    else if (IsKeyPressed(KEY_S))
+    {
+        // y += TILE_HEIGHT;
+        protagonist.move(Action::MOVE_DOWN, world);
         hasKeyBeenPressed = true; 
-    }
-    if (IsKeyPressed(KEY_W)) 
-    { 
-        y -= TILE_HEIGHT; hasKeyBeenPressed = true; 
-    }
-    if (IsKeyPressed(KEY_S)) 
-    { 
-        y += TILE_HEIGHT; hasKeyBeenPressed = true; 
-    }
-
-    int wx = x / TILE_WIDTH;
-    int wy = y / TILE_HEIGHT;
-
-    Tile target_tile = (protagonist.zone == Zone::World) ? world[wx][wy] : dungeon[wx][wy];
-
-    // do not allow players to move to pass the boundary
-    if (target_tile.type == TileType::Boundary) {
-        // TraceLog(LOG_INFO, "1. Position: x=%f, y=%f", x, y);
-        x = protagonist.x;
-        y = protagonist.y;
     }
 
     if (enemy.isAlive) 
@@ -195,10 +186,12 @@ void Game::Update()
     if (hasKeyBeenPressed) {
         SoundAsset sound = (protagonist.zone == Zone::World) ? SoundAsset::FootGrass : SoundAsset::FootStone;
         audio.play_sound(sound);
+        x = protagonist.x;
+        y = protagonist.y;
     }
     
-    protagonist.x = x;
-    protagonist.y = y;
+    // protagonist.x = x;
+    // protagonist.y = y;
     int camera_x = x;
     int camera_y = y;
     camera.target = { x, y };   
@@ -260,6 +253,9 @@ void Game::Update()
     
     collisions(player_projectiles, enemy);
     collisions(enemy_projectiles, protagonist);
+
+    TraceLog(LOG_INFO, "PLAYER STAMINA: %f", protagonist.stamina);
+    protagonist.regenerate_stamina();
 }
 
 void Game::update_qlearning() 
