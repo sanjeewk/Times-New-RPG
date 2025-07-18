@@ -11,6 +11,7 @@
 #include "player.hpp"
 #include "mob.hpp"
 #include "qlearning.hpp"
+#include "GameAPI.hpp"
 
 
 enum class GameState {Menu, Game, Pause};
@@ -61,6 +62,8 @@ class Game
         Object chest;
 
         QLearningAgent agent;
+        GameAPI api;
+
     
         Timer combatTextTimer;
         Timer playerTimer;

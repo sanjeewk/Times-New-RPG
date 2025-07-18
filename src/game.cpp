@@ -10,6 +10,7 @@ Game::Game() : enemy(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT), protagonist(100, 
     QLearningAgent agent;
     training = false; // set to true to enable training mode
     count = 0;
+    GameAPI api;
 }
 
 // load assets and initialize game state
@@ -90,7 +91,6 @@ void Game::menu() {
             }
     }
 }
-
 
 void Game::Update() 
 {
@@ -256,6 +256,12 @@ void Game::Update()
 
     TraceLog(LOG_INFO, "PLAYER STAMINA: %f", protagonist.stamina);
     protagonist.regenerate_stamina();
+
+    api.getNextAction({
+        static_cast<int>(protagonist.x / TILE_WIDTH),
+        static_cast<int>(protagonist.y / TILE_HEIGHT),
+        protagonist.health
+    });
 }
 
 void Game::update_qlearning() 
