@@ -12,6 +12,7 @@
 #include "mob.hpp"
 #include "qlearning.hpp"
 #include "GameAPI.hpp"
+#include "rlclient.hpp"
 
 
 enum class GameState {Menu, Game, Pause};
@@ -79,6 +80,7 @@ class Game
         std::vector<Mob> enemies;    
     
     public:
+        AsyncGameClient client;
         bool training;
         int count;
         Mob enemy;

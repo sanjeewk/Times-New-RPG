@@ -8,12 +8,12 @@ GameAPI::GameAPI(const std::string& python_address) {
     zmq_connect(requester, python_address.c_str());
 }
 
-// GameAPI::~GameAPI() {
-//     zmq_close(requester);
-//     zmq_ctx_destroy(context);
-// }
+GameAPI::~GameAPI() {
+    zmq_close(requester);
+    zmq_ctx_destroy(context);
+}
 
-void GameAPI::getNextAction(const PlayerState& currentState) {
+GameAction GameAPI::getNextAction(const PlayerState& currentState) {
     // Serialize state to JSON
     json state_json = currentState.to_json();
     std::string request = state_json.dump();
@@ -28,5 +28,6 @@ void GameAPI::getNextAction(const PlayerState& currentState) {
     
     // Parse response
     json response_json = json::parse(response_str);
+    return GameAction::from_json(response_json);
     //json::print(response_json);
 }

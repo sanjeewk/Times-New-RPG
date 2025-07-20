@@ -11,6 +11,7 @@ Game::Game() : enemy(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT), protagonist(100, 
     training = false; // set to true to enable training mode
     count = 0;
     GameAPI api;
+    AsyncGameClient client;
 }
 
 // load assets and initialize game state
@@ -146,6 +147,26 @@ void Game::Update()
         hasKeyBeenPressed = true; 
     }
 
+    // GameAction next_move = api.getNextAction({
+    // static_cast<int>(protagonist.x / TILE_WIDTH),
+    // static_cast<int>(protagonist.y / TILE_HEIGHT),
+    // protagonist.health
+    // });
+    // if (next_move.action != Action::FIRE_PROJECTILE) {
+    //     protagonist.move(next_move.action, world);
+    // } else {
+    //     audio.play_sound(SoundAsset::Laser);
+    //     player_projectiles.push_back(protagonist.attack(enemy.x, enemy.y));
+    //     // enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
+    // }
+    //TraceLog(LOG_INFO, "Sending request to AI server... request_in_flight_=%d", client.request_in_flight_);
+    if(!client.request_in_flight_)
+    {
+        json request = {{"frame", protagonist.x}};
+        client.sendRequest(request);
+    }
+
+
     if (enemy.isAlive) 
     {
         if (!combatTextTimer.isActive) {
@@ -174,6 +195,19 @@ void Game::Update()
             {
                 bool result = enemy.move(action, world);
             }
+
+            // GameAction next_move = api.getNextAction({
+            // static_cast<int>(protagonist.x / TILE_WIDTH),
+            // static_cast<int>(protagonist.y / TILE_HEIGHT),
+            // protagonist.health
+            // });
+            // if (next_move.action != Action::FIRE_PROJECTILE) {
+            //     protagonist.move(next_move.action, world);
+            // } else {
+            //     audio.play_sound(SoundAsset::Laser);
+            //     player_projectiles.push_back(protagonist.attack(enemy.x, enemy.y));
+            //     // enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
+            // }
         }
 
         else if (enemy.health <= 0)
@@ -254,14 +288,10 @@ void Game::Update()
     collisions(player_projectiles, enemy);
     collisions(enemy_projectiles, protagonist);
 
-    TraceLog(LOG_INFO, "PLAYER STAMINA: %f", protagonist.stamina);
+    // TraceLog(LOG_INFO, "PLAYER STAMINA: %f", protagonist.stamina);
     protagonist.regenerate_stamina();
 
-    api.getNextAction({
-        static_cast<int>(protagonist.x / TILE_WIDTH),
-        static_cast<int>(protagonist.y / TILE_HEIGHT),
-        protagonist.health
-    });
+
 }
 
 void Game::update_qlearning() 
@@ -579,6 +609,13 @@ int main()
     SetTargetFPS(60);
 
     Game game;
+
+    game.client.setResponseCallback([](const json& response) {
+        TraceLog(LOG_INFO, "Received response: %s", response.dump().c_str());
+    });
+
+    game.client.start();
+
     game.Startup();
 
     while (!WindowShouldClose()) {
