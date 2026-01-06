@@ -31,7 +31,7 @@ class Player : public Entity
 
         // Stamina mechanic
         float stamina;
-        static constexpr float STAMINA_MAX = 6000.0f;
+        static constexpr float STAMINA_MAX = 60.0f;
         static constexpr float STAMINA_REGEN = 0.05f;
         static constexpr float STAMINA_MOVE_COST = 2.0f;
         static constexpr float STAMINA_ATTACK_COST = 5.0f;
