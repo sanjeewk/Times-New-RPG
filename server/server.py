@@ -2,6 +2,7 @@ import time
 import zmq
 import json
 import random
+import os
 from typing import Dict, Any
 
 class GameAIServer:
@@ -30,18 +31,30 @@ class GameAIServer:
         return {"action": action, "intensity": 1}
     
     def run(self):
+        # Create screenshots folder if not exists
+        if not os.path.exists("screenshots"):
+            os.makedirs("screenshots")
+
+        frame_count = 0
         while True:
             # Wait for request from C++
             message = self.socket.recv()
-            state = json.loads(message.decode('utf-8'))
-            print(f"Received state: {state}")
-            time.sleep(2)
-            # Process and send response
-            action = self.decide_action(state)
+            print(f"Received image data of size: {len(message)} bytes")
+
+            # # Save the image
+            # filename = f"screenshots/frame_{frame_count:06d}.png"
+            # with open(filename, 'wb') as f:
+            #     f.write(message)
+            # print(f"Saved frame to {filename}")
+            # frame_count += 1
+
+
+            action = self.decide_action({"health":20})
             self.socket.send(json.dumps(action).encode('utf-8'))
 
             # Log the action
             print(f"Action sent: {action}")
+
 
 if __name__ == "__main__":
     server = GameAIServer()

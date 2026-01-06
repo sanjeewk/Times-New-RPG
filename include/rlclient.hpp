@@ -19,7 +19,7 @@ public:
     void start();
     void stop();
     
-    void sendRequest(const json& request);
+    void sendRequest(const std::vector<char>& data);
     void setResponseCallback(std::function<void(const json&)> callback);
     bool request_in_flight_{false};
 
@@ -31,7 +31,7 @@ private:
     std::thread worker_thread_;
     std::atomic<bool> running_{false};
     
-    std::queue<json> request_queue_;
+    std::queue<std::vector<char>> request_queue_;
     std::mutex queue_mutex_;
     std::condition_variable queue_cv_;
     

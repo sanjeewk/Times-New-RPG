@@ -1,8 +1,9 @@
 // async_client.cpp
 #include "rlclient.hpp"
 #include <iostream>
+#include <vector>
 
-AsyncGameClient::AsyncGameClient(const std::string& server_addr) 
+AsyncGameClient::AsyncGameClient(const std::string& server_addr)
     : context_(1), socket_(context_, ZMQ_REQ) {
     socket_.connect(server_addr);
     socket_.set(zmq::sockopt::rcvtimeo, 2500);  // 2000ms timeout
@@ -30,10 +31,10 @@ void AsyncGameClient::stop() {
     }
 }
 
-void AsyncGameClient::sendRequest(const json& request) {
+void AsyncGameClient::sendRequest(const std::vector<char>& data) {
     {
         std::lock_guard<std::mutex> lock(queue_mutex_);
-        request_queue_.push(request);
+        request_queue_.push(data);
     }
     queue_cv_.notify_one();
 }
@@ -44,21 +45,21 @@ void AsyncGameClient::setResponseCallback(std::function<void(const json&)> callb
 
 void AsyncGameClient::workerThread() {
     while (running_) {
-        json request;
-        
+        std::vector<char> request_data;
+
         // Wait for requests or response completion
         {
             std::unique_lock<std::mutex> lock(queue_mutex_);
-            queue_cv_.wait(lock, [this]() { 
-                return !running_ || 
-                      (!request_in_flight_ && !request_queue_.empty()); 
+            queue_cv_.wait(lock, [this]() {
+                return !running_ ||
+                      (!request_in_flight_ && !request_queue_.empty());
             });
-            
+
             if (!running_) break;
-            
-            request = request_queue_.front();
+
+            request_data = request_queue_.front();
             request_queue_.pop();
-            
+
             // Mark request as in flight
             std::lock_guard<std::mutex> flight_lock(in_flight_mutex_);
             request_in_flight_ = true;
@@ -66,7 +67,7 @@ void AsyncGameClient::workerThread() {
 
         // Send request
         try {
-            zmq::message_t req(request.dump());
+            zmq::message_t req(request_data.data(), request_data.size());
             socket_.send(req, zmq::send_flags::none);
 
             // Receive response
@@ -80,7 +81,7 @@ void AsyncGameClient::workerThread() {
         } catch (const std::exception& e) {
             std::cerr << "Network error: " << e.what() << std::endl;
         }
-        
+
         // Clear in-flight status
         {
             std::lock_guard<std::mutex> flight_lock(in_flight_mutex_);

@@ -94,6 +94,7 @@ class Game
         void reset();
         void render();
         void check_state();
+        // void SaveFrameAsImage(const char* filename);
     
         void Shutdown();    
     // private:

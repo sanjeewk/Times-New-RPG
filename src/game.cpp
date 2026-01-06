@@ -1,4 +1,5 @@
 #include "game.hpp"
+#include <fstream>
 
 Game::Game() : enemy(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT), protagonist(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT, Zone::World)
 {  
@@ -118,6 +119,19 @@ void Game::Update()
         player_projectiles.push_back(protagonist.attack(mousePos.x, mousePos.y));
     }
 
+    // Add random projectiles in 4 directions when right mouse button is pressed
+    if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
+        Vector2 directions[4] = {
+            {1, 0},   // Right
+            {-1, 0},  // Left
+            {0, 1},   // Down
+            {0, -1}   // Up
+        };
+        for (const auto& dir : directions) {
+            player_projectiles.push_back(protagonist.attack(mousePos.x + dir.x * 100, mousePos.y + dir.y * 100));
+        }
+    }
+
     // record user input - move player with WASD keys
     bool hasKeyBeenPressed = false;
     if (IsKeyPressed(KEY_A))
@@ -162,10 +176,24 @@ void Game::Update()
     //TraceLog(LOG_INFO, "Sending request to AI server... request_in_flight_=%d", client.request_in_flight_);
     if(!client.request_in_flight_)
     {
-        json request = {{"frame", protagonist.x}};
-        client.sendRequest(request);
-    }
+        // Capture current frame
+        Image img = LoadImageFromScreen();
+        ExportImage(img, "temp_frame.png");
+        UnloadImage(img);
 
+        // Read the image file into vector
+        std::ifstream file("temp_frame.png", std::ios::binary | std::ios::ate);
+        std::streamsize size = file.tellg();
+        file.seekg(0, std::ios::beg);
+        std::vector<char> buffer(size);
+        file.read(buffer.data(), size);
+        file.close();
+
+        // Remove temp file
+        std::remove("temp_frame.png");
+
+        client.sendRequest(buffer);
+    }
 
     if (enemy.isAlive) 
     {
@@ -195,6 +223,7 @@ void Game::Update()
             {
                 bool result = enemy.move(action, world);
             }
+            
 
             // GameAction next_move = api.getNextAction({
             // static_cast<int>(protagonist.x / TILE_WIDTH),
@@ -291,8 +320,9 @@ void Game::Update()
     // TraceLog(LOG_INFO, "PLAYER STAMINA: %f", protagonist.stamina);
     protagonist.regenerate_stamina();
 
-
+    
 }
+
 
 void Game::update_qlearning() 
 {
@@ -511,6 +541,31 @@ void Game::render()
     // DrawUITile(50, -5, 2, 0, 0, 4.0f);
     // DrawUITile(100, -5, 2, 0, 0, 4.0f);
   
+    // Draw stamina bar
+    int staminaBarWidth = 100;
+    int staminaBarHeight = 20;
+    int staminaBarX = GetScreenWidth() / 2 - staminaBarWidth / 2;
+    int staminaBarY = 10;
+    int staminaBarFillWidth = (staminaBarWidth * protagonist.stamina) / Player::STAMINA_MAX;
+
+    // Draw pixelated background
+    for (int x = 0; x < staminaBarWidth; x++) {
+        for (int y = 0; y < staminaBarHeight; y++) {
+            DrawRectangle(staminaBarX + x, staminaBarY + y, 1, 1, GRAY);
+        }
+    }
+
+    // Draw pixelated fill
+    for (int x = 0; x < staminaBarFillWidth; x++) {
+        for (int y = 0; y < staminaBarHeight; y++) {
+            DrawRectangle(staminaBarX + x, staminaBarY + y, 1, 1, GREEN);
+        }
+    }
+    // Draw pixelated border
+    // for (int x = 0; x < staminaBarWidth; x++) { 
+    //     DrawRectangle(staminaBarX + x, staminaBarY, 1, staminaBarHeight, DARKGRAY);
+    // }
+
     DrawRectangleLines(800, 0, 330, 150, BLUE);
     DrawText(TextFormat("Camera Target: %06.2f, %06.2f", camera.target.x, camera.target.y), 820, 10, 14, YELLOW);
     DrawText(TextFormat("Camera Zoom: %06.2f", camera.zoom), 820, 30, 14, YELLOW);
@@ -602,6 +657,12 @@ void Game::DrawUITile(int pos_x, int pos_y, int texture_index_x, int texture_ind
     };
     DrawTexturePro(textures[static_cast<int>(TextureAsset::Hearts)], source, dest, { 0,0 }, 0, WHITE);
 }
+
+// void Game::SaveFrameAsImage(const char* filename) {
+//     Image img = LoadImageFromScreen();
+//     ExportImage(img, filename); // filename should end with .png
+//     UnloadImage(img);
+// }
 
 int main() 
 {
