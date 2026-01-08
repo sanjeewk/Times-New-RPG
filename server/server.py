@@ -3,6 +3,8 @@ import zmq
 import json
 import random
 import os
+import signal
+import sys
 from typing import Dict, Any
 
 class GameAIServer:
@@ -34,6 +36,16 @@ class GameAIServer:
         # Create screenshots folder if not exists
         if not os.path.exists("screenshots"):
             os.makedirs("screenshots")
+
+        # Setup signal handler for graceful shutdown
+        def signal_handler(sig, frame):
+            print("Received Ctrl+C, shutting down server...")
+            self.socket.close()
+            self.context.term()
+            sys.exit(0)
+
+        signal.signal(signal.SIGINT, signal_handler)
+        print("Press Ctrl+C to quit")
 
         frame_count = 0
         while True:
