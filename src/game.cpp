@@ -173,27 +173,31 @@ void Game::Update()
     //     player_projectiles.push_back(protagonist.attack(enemy.x, enemy.y));
     //     // enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
     // }
-    //TraceLog(LOG_INFO, "Sending request to AI server... request_in_flight_=%d", client.request_in_flight_);
+
+    TraceLog(LOG_INFO, "Sending request to AI server... request_in_flight_=%d", client.request_in_flight_);
     if(!client.request_in_flight_)
     {
         // Capture current frame
         Image img = LoadImageFromScreen();
-        ExportImage(img, "temp_frame.png");
+
+        // Export image to memory using Raylib (PNG format)
+        int dataSize = 0;
+        unsigned char* data = ExportImageToMemory(img, ".png", &dataSize);
+
+        // Convert to vector<char> for sending
+        std::vector<char> buffer(dataSize);
+        std::memcpy(buffer.data(), data, dataSize);
+
+        // Free the allocated memory
+        RL_FREE(data);
         UnloadImage(img);
 
-        // Read the image file into vector
-        std::ifstream file("temp_frame.png", std::ios::binary | std::ios::ate);
-        std::streamsize size = file.tellg();
-        file.seekg(0, std::ios::beg);
-        std::vector<char> buffer(size);
-        file.read(buffer.data(), size);
-        file.close();
-
-        // Remove temp file
-        std::remove("temp_frame.png");
-
-        client.sendRequest(buffer);
+        //client.sendRequest(buffer);
     }
+    // else
+    // {
+    //     TraceLog(LOG_INFO, "banana");
+    // }
 
     if (enemy.isAlive) 
     {
