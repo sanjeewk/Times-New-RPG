@@ -1,8 +1,12 @@
 #include "game.hpp"
 #include <fstream>
+#include <thread>
+#include <atomic>
+#include <chrono>
+#include "rlgl.h"
 
 Game::Game() : enemy(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT), protagonist(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT, Zone::World)
-{  
+{
     GameState game_state = GameState::Menu;
     camera.target = { 0, 0 };
     camera.offset = { screenWidth / 2.0f, screenHeight / 2.0f };
@@ -13,6 +17,7 @@ Game::Game() : enemy(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT), protagonist(100, 
     count = 0;
     GameAPI api;
     AsyncGameClient client;
+    image_capture_running = false;
 }
 
 // load assets and initialize game state
@@ -53,7 +58,11 @@ void Game::Startup()
     chest = { 0 };
 
     TraceLog(LOG_INFO, "Application started!--------------------------------------------------------------------------------------------------------");
-    audio.play_music(MusicAsset::LightAmbience); 
+    audio.play_music(MusicAsset::LightAmbience);
+
+    // Start image capture thread
+    this->image_capture_running = true;
+    this->image_capture_thread = std::thread(&Game::imageCaptureThread, this);
 }
 
 void Game::check_state() {
@@ -174,30 +183,7 @@ void Game::Update()
     //     // enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
     // }
 
-    TraceLog(LOG_INFO, "Sending request to AI server... request_in_flight_=%d", client.request_in_flight_);
-    if(!client.request_in_flight_)
-    {
-        // Capture current frame
-        Image img = LoadImageFromScreen();
-
-        // Export image to memory using Raylib (PNG format)
-        int dataSize = 0;
-        unsigned char* data = ExportImageToMemory(img, ".png", &dataSize);
-
-        // Convert to vector<char> for sending
-        std::vector<char> buffer(dataSize);
-        std::memcpy(buffer.data(), data, dataSize);
-
-        // Free the allocated memory
-        RL_FREE(data);
-        UnloadImage(img);
-
-        //client.sendRequest(buffer);
-    }
-    // else
-    // {
-    //     TraceLog(LOG_INFO, "banana");
-    // }
+    // Image sending is now handled by the background thread
 
     if (enemy.isAlive) 
     {
@@ -600,11 +586,50 @@ void Game::render()
     }
 
     // DrawTile(, 0, 9);
-    // DrawTile(, 0, 9);
+
+    // Capture current frame after rendering (at ~10 FPS for performance)
+    static int frame_count = 0;
+    frame_count++;
+    if (frame_count % 6 == 0) {  // Capture every 6th frame (60 FPS / 6 ≈ 10 FPS)
+        // Use rlReadScreenPixels for direct pixel access (faster than LoadImageFromScreen)
+        TraceLog(LOG_INFO, "Capturing frame for image queue");
+        int width = GetScreenWidth();
+        int height = GetScreenHeight();
+        int dataSize = width * height * 4;  // RGBA format (4 bytes per pixel)
+        unsigned char* pixels = rlReadScreenPixels(width, height);
+        if (pixels) {
+            std::vector<char> buffer(dataSize);
+            std::memcpy(buffer.data(), pixels, dataSize);
+            image_queue.push(std::move(buffer));
+            RL_FREE(pixels);
+        }
+    }
 }
 
-void Game::Shutdown() 
+void Game::imageCaptureThread()
 {
+    while (image_capture_running)
+    {
+        if (!image_queue.empty()) {
+            auto buffer = std::move(image_queue.front());
+            image_queue.pop();
+            client.sendRequest(buffer);
+        }
+        // Sleep for a bit to avoid busy waiting
+        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+}
+
+void Game::Shutdown()
+{
+    // Stop image capture thread
+    this->image_capture_running = false;
+    if (this->image_capture_thread.joinable()) {
+        this->image_capture_thread.join();
+    }
+
+    this->client.stop(); // Stop the client as well
+
     for (auto& texture : textures) UnloadTexture(texture);
     audio.shutdown_audio();
     CloseAudioDevice();

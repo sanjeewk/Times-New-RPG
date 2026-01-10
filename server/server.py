@@ -6,6 +6,7 @@ import os
 import signal
 import sys
 from typing import Dict, Any
+from PIL import Image
 
 class GameAIServer:
     def __init__(self, port=5555):
@@ -53,12 +54,21 @@ class GameAIServer:
             message = self.socket.recv()
             print(f"Received image data of size: {len(message)} bytes")
 
-            # # Save the image
-            # filename = f"screenshots/frame_{frame_count:06d}.png"
-            # with open(filename, 'wb') as f:
-            #     f.write(message)
-            # print(f"Saved frame to {filename}")
-            # frame_count += 1
+            # Convert raw RGBA pixel data to image
+            # Screen dimensions: 1100x950 pixels, RGBA format (4 bytes per pixel)
+            width, height = 1100, 950
+            expected_size = width * height * 4
+
+            if len(message) == expected_size:
+                # Create image from raw RGBA data
+                img = Image.frombytes('RGBA', (width, height), message)
+                filename = f"screenshots/frame_{frame_count:06d}.png"
+                img.save(filename, 'PNG')
+                print(f"Saved frame to {filename}")
+            else:
+                print(f"Warning: Received data size {len(message)} doesn't match expected {expected_size}")
+
+            frame_count += 1
 
 
             action = self.decide_action({"health":20})

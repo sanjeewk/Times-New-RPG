@@ -13,6 +13,9 @@
 #include "qlearning.hpp"
 #include "GameAPI.hpp"
 #include "rlclient.hpp"
+#include <thread>
+#include <atomic>
+#include <queue>
 
 
 enum class GameState {Menu, Game, Pause};
@@ -77,8 +80,15 @@ class Game
     
         std::vector<Projectile> player_projectiles;
         std::vector<Projectile> enemy_projectiles;
-        std::vector<Mob> enemies;    
-    
+        std::vector<Mob> enemies;
+
+        // Image capture thread
+        std::thread image_capture_thread;
+        std::atomic<bool> image_capture_running;
+        std::queue<std::vector<char>> image_queue;
+
+        void imageCaptureThread();
+
     public:
         AsyncGameClient client;
         bool training;
