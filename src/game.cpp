@@ -18,6 +18,9 @@ Game::Game() : enemy(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT), protagonist(100, 
     GameAPI api;
     AsyncGameClient client;
     image_capture_running = false;
+    current_reward = 0.0f;
+    episode_done = false;
+    frame_count = 0;
 }
 
 // load assets and initialize game state
@@ -93,7 +96,7 @@ void Game::menu() {
             audio.play_sound(SoundAsset::Laser);
             Vector2 mouseScreen = GetMousePosition();
             Vector2 mousePos = GetScreenToWorld2D(mouseScreen, camera);
-            game_state = GameState::Game; // Change to game stat
+            game_state = GameState::Game; // Change to game active state
 
             // Check if the mouse is clicked on the start button
             if (mousePos.x >= 100 && mousePos.x <= 200 && mousePos.y >= 100 && mousePos.y <= 150) {
@@ -304,13 +307,43 @@ void Game::Update()
         update_projectile(projectile);
     }
     
-    collisions(player_projectiles, enemy);
-    collisions(enemy_projectiles, protagonist);
+    // Calculate rewards for DQN training
+    current_reward = 0.0f;
+    episode_done = false;
+
+    // Check for collisions and calculate rewards
+    if (collisions(player_projectiles, enemy))
+    {
+        current_reward += 10.0f;  // Reward for hitting enemy
+    }
+    if (collisions(enemy_projectiles, protagonist))
+    {
+        current_reward -= 10.0f;  // Penalty for getting hit by enemy
+    }
+
+    // Check for episode end conditions
+    if (enemy.health <= 0)
+    {
+        audio.play_sound(SoundAsset::Death);
+        enemy.isAlive = false;
+        current_reward += 100.0f;  // Large reward for defeating enemy
+        episode_done = true;
+    }
+
+    if (protagonist.health <= 0)
+    {
+        audio.play_sound(SoundAsset::Death);
+        current_reward -= 100.0f;  // Large penalty for player dying
+        episode_done = true;
+    }
+
+    // Small negative reward to encourage efficiency
+    current_reward -= 0.1f;
 
     // TraceLog(LOG_INFO, "PLAYER STAMINA: %f", protagonist.stamina);
     protagonist.regenerate_stamina();
 
-    
+
 }
 
 
@@ -584,39 +617,53 @@ void Game::render()
             WHITE
         );
     }
-
-    // DrawTile(, 0, 9);
-
+    bool temp = true;
     // Capture current frame after rendering (at ~10 FPS for performance)
-    static int frame_count = 0;
-    frame_count++;
-    if (frame_count % 6 == 0) {  // Capture every 6th frame (60 FPS / 6 ≈ 10 FPS)
-        // Use rlReadScreenPixels for direct pixel access (faster than LoadImageFromScreen)
-        TraceLog(LOG_INFO, "Capturing frame for image queue");
-        int width = GetScreenWidth();
-        int height = GetScreenHeight();
-        int dataSize = width * height * 4;  // RGBA format (4 bytes per pixel)
-        unsigned char* pixels = rlReadScreenPixels(width, height);
-        if (pixels) {
-            std::vector<char> buffer(dataSize);
-            std::memcpy(buffer.data(), pixels, dataSize);
-            image_queue.push(std::move(buffer));
-            RL_FREE(pixels);
+    if (temp)
+    {
+
+        frame_count++;
+        if (frame_count % 3 == 0) {  // Capture every 6th frame (60 FPS / 6 ≈ 10 FPS)
+            // Use rlReadScreenPixels for direct pixel access 
+            TraceLog(LOG_INFO, "Capturing frame for image queue");
+            int width = GetScreenWidth();
+            int height = GetScreenHeight();
+            int dataSize = width * height * 4;  // RGBA format (4 bytes per pixel)
+            unsigned char* pixels = rlReadScreenPixels(width, height);
+            if (pixels) {
+                std::vector<unsigned char> buffer(dataSize);
+                std::memcpy(buffer.data(), pixels, dataSize);
+                image_queue.push(std::move(buffer));
+                RL_FREE(pixels);
+            }
         }
     }
 }
 
 void Game::imageCaptureThread()
 {
+    TraceLog(LOG_INFO, "Image capture thread started");
     while (image_capture_running)
     {
+        TraceLog(LOG_INFO, "Image capture thread running");
         if (!image_queue.empty()) {
+            TraceLog(LOG_INFO, "Sending image data to RL client");
             auto buffer = std::move(image_queue.front());
             image_queue.pop();
-            client.sendRequest(buffer);
+
+            // Create JSON message with raw image buffer, reward, and done flag
+            json message;
+            message["image_data"] = buffer;  // Raw RGBA buffer
+            message["reward"] = current_reward;
+            message["done"] = episode_done;
+
+            // Send JSON as string
+            std::string json_str = message.dump();
+            std::vector<char> json_buffer(json_str.begin(), json_str.end());
+            client.sendRequest(json_buffer);
         }
         // Sleep for a bit to avoid busy waiting
-        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
@@ -713,15 +760,21 @@ int main()
         if (game.training) {
 
             game.update_qlearning();
-            if (game.enemy.health <=0 || game.protagonist.health <= 0) 
+            if (game.enemy.health <=0 || game.protagonist.health <= 0)
             {
                 game.reset();
             }
         }
         else {
             game.check_state();
+            // Reset episode if done (for DQN training)
+            if (game.episode_done) {
+                game.reset();
+                game.current_reward = 0.0f;
+                game.episode_done = false;
+            }
         }
-        
+
         BeginDrawing();
         ClearBackground(BLACK);
         game.render();

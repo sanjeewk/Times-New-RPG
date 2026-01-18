@@ -85,7 +85,7 @@ class Game
         // Image capture thread
         std::thread image_capture_thread;
         std::atomic<bool> image_capture_running;
-        std::queue<std::vector<char>> image_queue;
+        std::queue<std::vector<unsigned char>> image_queue;
 
         void imageCaptureThread();
 
@@ -95,6 +95,9 @@ class Game
         int count;
         Mob enemy;
         Player protagonist;
+        float current_reward;
+        bool episode_done;
+        int frame_count;
         Game();
     
         void Startup();
