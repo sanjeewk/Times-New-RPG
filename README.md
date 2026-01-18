@@ -45,7 +45,8 @@ Built with C++ and [raylib](https://www.raylib.com/).
 
 ### Controls
 - **WASD**: Move player
-- **Mouse Left Click**: Shoot projectile
+- **Mouse Left Click**: Shoot 
+- **Mouse Right Click**: Special attack
 - **E**: Enter/exit dungeon
 - **G**: Collect chest
 
@@ -63,13 +64,10 @@ Built with C++ and [raylib](https://www.raylib.com/).
 - [Sprites](https://totuslotus.itch.io/characterpack)
 - [Background](https://totuslotus.itch.io/characterpack)
 
-## License
-This project is for educational and personal use. See individual asset files for their respective licenses.
-
 
 ## Game Structure
 
-The game is built around a top-down tile-based map. The player, enemies, and interactive objects  are all represented as entities on this grid. Each iteration the follwoing get updated:
+The game is built around a top-down tile-based map. The player, enemies, and interactive objects  are all represented as entities on this grid. Each iteration the following get updated:
 
 - Player and enemy movement and actions
 - Camera position to follow the player
@@ -77,13 +75,80 @@ The game is built around a top-down tile-based map. The player, enemies, and int
 - Sound and music playback based on game events
 - Tile map rendering for the current zone
 
-## Reinforcement Learning 
+## Reinforcement Learning
 
-Basic explanation of the RL used:
+This project implements two reinforcement learning models for training AI enemies: Q-Learning and Deep Q-Learning (DQN). The AI learns to control enemy behavior by observing game states and receiving rewards based on actions taken.
 
-1. **State Representation**: The boss observes the game state, including player position, health, and environmental factors.
-2. **Action Space**: The boss can choose from a set of actions (move, attack, defend, use abilities, etc.).
-3. **Reward Function**: The boss receives rewards for effective actions that hurt the player and penalties for poor performance.
-4. **Training Loop**: Using RL algorithms, the boss is trained over many simulated episodes to maximize its cumulative reward.
+### How the Server Works
 
-The goal is for the AI to learn over time from the player's movement patterns.
+The reinforcement learning training and inference occurs through a client-server architecture:
+
+- **Client (Game)**: The C++ game captures screenshots and sends them to the Python server via ZeroMQ messaging.
+- **Server (RL.py and server.py)**: The Python server processes the images, uses the RL models to decide actions, and sends responses back to the game.
+- **Communication**: Uses asynchronous messaging with JSON payloads containing image data, rewards, and episode completion flags.
+
+### Inference Process
+
+During inference (non-training mode), the AI uses learned policies to make decisions:
+
+1. Game captures a screenshot (every 3rd frame at 30 FPS = ~10 FPS capture rate)
+2. Image is sent to server via ZeroMQ
+3. Server processes image through the trained model
+4. Model outputs an action (e.g., MOVE_UP, MOVE_DOWN, ATTACK)
+5. Action is sent back to game, enemy performs the action
+
+
+### Q-Learning Model
+
+Q-Learning is a model-free reinforcement learning algorithm that learns a Q-table mapping states to action values.
+
+**How it works:**
+- **Q-Table**: A table where rows are states (discretized game positions) and columns are actions (MOVE_LEFT, MOVE_RIGHT, etc.)
+- **Learning**: Updates Q-values using the Bellman equation: Q(s,a) = Q(s,a) + α[r + γ max(Q(s',a')) - Q(s,a)]
+- **Policy**: ε-greedy policy for exploration vs exploitation
+
+**Training Process:**
+1. Initialize Q-table with zeros
+2. For each episode:
+   - Reset game state
+   - While episode not done:
+     - Choose action (explore or exploit)
+     - Execute action, observe reward and new state
+     - Update Q-value for (state, action) pair
+     - Repeat
+3. Save Q-table to file (assets/qtable.txt)
+
+**State Representation**: (player_x, player_y, enemy_x, enemy_y, enemy_health) discretized to grid coordinates.
+**Actions**: MOVE_LEFT, MOVE_RIGHT, MOVE_UP, MOVE_DOWN, FIRE_PROJECTILE
+**Rewards**: +10 for hitting player, -10 for getting hit, ±100 for win/loss, -0.1 for each step
+
+### Deep Q-Learning (DQN) Model
+
+Deep Q-Learning uses a convolutional neural network to approximate the Q-function, allowing it to work with raw pixel inputs.
+
+**How it works:**
+- **Network Architecture**: CNN with convolutional layers for image processing, followed by fully connected layers for Q-value estimation
+- **Experience Replay**: Stores transitions in a replay buffer and samples mini-batches for training stability
+- **Target Network**: Separate network for computing target Q-values, updated periodically to reduce oscillations
+
+**Training Process:**
+1. Initialize DQN network and target network
+2. For each episode:
+   - Reset game state
+   - While episode not done:
+     - Choose action using ε-greedy policy
+     - Execute action, observe reward and next state
+     - Store transition in replay buffer
+     - Sample mini-batch from buffer
+     - Compute target Q-values using Bellman equation
+     - Train network to minimize MSE between predicted and target Q-values
+     - Update target network periodically
+3. Save model weights to file (server/models/dqn_model.pth)
+
+**State Representation**: Raw RGBA pixel data (1100x950 resolution, downscaled to 64x64 for network input)
+**Actions**: Same as Q-Learning (5 actions)
+**Rewards**: Same reward structure as Q-Learning
+**Network Details**: Input: 64x64x3 (RGB), Output: 5 Q-values (one per action)
+
+## License
+This project is for educational and personal use. See individual asset files for their respective licenses.
