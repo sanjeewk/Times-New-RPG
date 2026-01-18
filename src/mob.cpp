@@ -41,7 +41,7 @@ void Mob::random_move(Tile world[20][18])
     // do not allow players to move to pass the boundary
     if (target_tile.type == TileType::Boundary) {
         
-        TraceLog(LOG_INFO, "move not allowed x=%f, y=%f", x, y);
+        //TraceLog(LOG_INFO, "move not allowed x=%f, y=%f", x, y);
         x -= mob_move_x;
         y -= mob_move_y;
     }
@@ -79,7 +79,7 @@ bool Mob::move(Action action, Tile world[20][18])
     // do not allow players to move to pass the boundary
     if (target_tile.type == TileType::Boundary) {
         
-        TraceLog(LOG_INFO, "move not allowed x=%f, y=%f", x, y);
+        // TraceLog(LOG_INFO, "move not allowed x=%f, y=%f", x, y);
         if (move_x != 0)
         {
             x -= move_x*2;

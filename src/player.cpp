@@ -59,7 +59,7 @@ void Player::random_move(Tile world[20][18])
 // execute action or return false if not possible
 bool Player::move(Action action, Tile world[20][18])
 {
-    TraceLog(LOG_INFO, "Player::move called with action: %d", static_cast<int>(action));
+    //TraceLog(LOG_INFO, "Player::move called with action: %d", static_cast<int>(action));
 
     if (stamina < STAMINA_MOVE_COST) 
     {

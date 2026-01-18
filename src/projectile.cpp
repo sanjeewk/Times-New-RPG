@@ -31,7 +31,7 @@ bool collisions(std::vector<Projectile>& projectiles, Entity& target) {
             projectile.active = false;
             // Handle target hit
             TraceLog(LOG_INFO, "Collisions");
-            TraceLog(LOG_INFO, "health: %d", target.health);
+            // TraceLog(LOG_INFO, "health: %d", target.health);
             target.health -= 10;
             collision = true;
 
