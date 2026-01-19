@@ -19,7 +19,7 @@
 
 
 enum class GameState {Menu, Game, Pause};
-enum class TextureAsset { Tilemap, Player, Dungeon, Hearts, Arrow, Torch, Magic };
+enum class TextureAsset { Tilemap, Player, Dungeon, Hearts, Arrow, Torch, Magic, Skeleton };
 
 // function to get if coordinates are outside the bound
 // enemy class
@@ -50,7 +50,7 @@ class Timer
 class Game 
 {
     private:
-        static constexpr int MAX_TEXTURES = 7;
+        static constexpr int MAX_TEXTURES = 8;
         // static constexpr int WORLD_WIDTH = 20;
         // static constexpr int WORLD_HEIGHT = 18;
 
@@ -70,11 +70,9 @@ class Game
 
     
         Timer combatTextTimer;
-        Timer playerTimer;
         GameState game_state;
-    
+
         Audio audio;
-        int player_sprite_toggle = 0;
         int bound = 8;
         int wall_width = 3;
     
@@ -113,6 +111,7 @@ class Game
     // private:
         void DrawTile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip=0);
         void DrawPlayerTile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip=0);
+        void DrawEnemyTile(int pos_x, int pos_y, int flip=0);
         void DrawUITile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip=0, float scale=0.0);
 
     };

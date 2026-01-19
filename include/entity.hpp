@@ -6,6 +6,8 @@
 #include "display.hpp"
 #include "Qlearning.hpp"
 
+enum class Direction { DOWN, UP, LEFT, RIGHT };
+
 // base class for player and NPCs
 class Entity 
 {

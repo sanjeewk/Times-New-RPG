@@ -16,9 +16,10 @@ public:
     // int health;
     // int attackPower;
     // bool isAlive;
+    Direction last_direction = Direction::RIGHT;
 
     // constructor
-    Mob(int health, int attackPower, int startX, int startY): 
+    Mob(int health, int attackPower, int startX, int startY):
         Entity(health, attackPower, startX, startY), name("Mob") // Call base class constructor
     {
         TraceLog(LOG_INFO, "Mob constructor called");

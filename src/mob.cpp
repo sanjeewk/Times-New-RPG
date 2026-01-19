@@ -53,19 +53,23 @@ bool Mob::move(Action action, Tile world[20][18])
 {
     int move_x = 0;
     int move_y = 0;
-    switch (action) 
+    switch (action)
     {
-        case MOVE_UP: 
+        case MOVE_UP:
             move_y = TILE_HEIGHT;
+            last_direction = Direction::UP;
             break;
-        case MOVE_DOWN: 
+        case MOVE_DOWN:
             move_y = -TILE_HEIGHT;
+            last_direction = Direction::DOWN;
             break;
-        case MOVE_LEFT: 
-            move_x = -TILE_WIDTH;  
+        case MOVE_LEFT:
+            move_x = -TILE_WIDTH;
+            last_direction = Direction::LEFT;
             break;
         case MOVE_RIGHT:
             move_x = TILE_WIDTH;
+            last_direction = Direction::RIGHT;
             break;
     }
     x += move_x;

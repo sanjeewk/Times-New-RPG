@@ -61,6 +61,9 @@ void Game::Startup()
     image = LoadImage("assets/projectiles/magic.png");
     textures[static_cast<int>(TextureAsset::Magic)] = LoadTextureFromImage(image);
 
+    image = LoadImage("assets/dungeon_pack/Character_animation/monsters_idle/skeleton1/v2/skeleton_v2_1.png");
+    textures[static_cast<int>(TextureAsset::Skeleton)] = LoadTextureFromImage(image);
+
     UnloadImage(image);
 
     // randomly pick tiles in world
@@ -528,24 +531,27 @@ void Game::render()
     //DrawText(TextFormat("%d", orc.damage), orc.x, orc.y - 10, 9, YELLOW);
 
     if (enemy.isAlive) {
-        DrawTile(enemy.getX(), enemy.getY(), 0, 9);
+        int flip = (enemy.last_direction == Direction::LEFT) ? 1 : 0;
+        DrawEnemyTile(enemy.getX(), enemy.getY(), flip);
     }
 
-    if (!playerTimer.isActive) {
-        playerTimer.Start(0.3);
+    // Draw player sprite based on last direction
+    int tex_x = 0, tex_y = 0, flip = 0;
+    switch (protagonist.last_direction) {
+        case Direction::DOWN:
+            tex_x = 0; tex_y = 0; flip = 0;
+            break;
+        case Direction::UP:
+            tex_x = 1; tex_y = 0; flip = 0;
+            break;
+        case Direction::RIGHT:
+            tex_x = 2; tex_y = 0; flip = 0;
+            break;
+        case Direction::LEFT:
+            tex_x = 2; tex_y = 0; flip = 1;
+            break;
     }
-
-    if (playerTimer.IsDone()) {
-        playerTimer.isActive = false;
-        player_sprite_toggle ^= 1;
-    }
-    // Draw player sprite
-    if (player_sprite_toggle == 0){
-        DrawPlayerTile(protagonist.x, protagonist.y, 0, 1);
-    }
-    else{
-        DrawPlayerTile(protagonist.x, protagonist.y, 0, 3);
-    }
+    DrawPlayerTile(protagonist.x, protagonist.y, tex_x, tex_y, flip);
 
     // Draw projectiles
     draw_projectiles(player_projectiles, textures.data());
@@ -698,12 +704,12 @@ void Game::DrawTile(int pos_x, int pos_y, int texture_index_x, int texture_index
     DrawTexturePro(textures[static_cast<int>(TextureAsset::Dungeon)], source, dest, { 0,0 }, 0, WHITE);
 }
 
-void Game::DrawPlayerTile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip) 
+void Game::DrawPlayerTile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip)
 {
     Rectangle source = {
         static_cast<float>(TILE_WIDTH * texture_index_x),
         static_cast<float>(TILE_HEIGHT * texture_index_y),
-        static_cast<float>(TILE_WIDTH),
+        static_cast<float>(TILE_WIDTH) * (flip ? -1 : 1),
         static_cast<float>(TILE_HEIGHT)
     };
     Rectangle dest = {
@@ -713,6 +719,23 @@ void Game::DrawPlayerTile(int pos_x, int pos_y, int texture_index_x, int texture
         static_cast<float>(TILE_HEIGHT)
     };
     DrawTexturePro(textures[static_cast<int>(TextureAsset::Player)], source, dest, { 0,0 }, 0, WHITE);
+}
+
+void Game::DrawEnemyTile(int pos_x, int pos_y, int flip)
+{
+    Rectangle source = {
+        0.0f,
+        0.0f,
+        static_cast<float>(textures[static_cast<int>(TextureAsset::Skeleton)].width) * (flip ? -1 : 1),
+        static_cast<float>(textures[static_cast<int>(TextureAsset::Skeleton)].height)
+    };
+    Rectangle dest = {
+        static_cast<float>(pos_x),
+        static_cast<float>(pos_y),
+        static_cast<float>(textures[static_cast<int>(TextureAsset::Skeleton)].width),
+        static_cast<float>(textures[static_cast<int>(TextureAsset::Skeleton)].height)
+    };
+    DrawTexturePro(textures[static_cast<int>(TextureAsset::Skeleton)], source, dest, { 0,0 }, 0, WHITE);
 }
 
 void Game::DrawUITile(int pos_x, int pos_y, int texture_index_x, int texture_index_y, int flip, float scale) 

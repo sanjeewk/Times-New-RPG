@@ -36,8 +36,10 @@ class Player : public Entity
         static constexpr float STAMINA_MOVE_COST = 2.0f;
         static constexpr float STAMINA_ATTACK_COST = 5.0f;
 
+        Direction last_direction = Direction::DOWN;
+
         // constructor
-        Player(int health, int attackPower, int startX, int startY, Zone zone) : 
+        Player(int health, int attackPower, int startX, int startY, Zone zone) :
             Entity(health, attackPower, startX, startY), zone(zone), money(0), experience(0)
         {
             TraceLog(LOG_INFO, "Player constructor called");
