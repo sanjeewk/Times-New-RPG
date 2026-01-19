@@ -1,4 +1,10 @@
 # Times new RPG
+
+<video width="640" height="480" controls>
+  <source src="readme/Raylib 2D RPG.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
 ![screen](readme/time-new.jpg)
 
 Times new RPG is a retro top down RPG with a plot centered around time loop
