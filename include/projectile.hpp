@@ -21,6 +21,7 @@ enum class ProjectileType
     BULLET,
     FIREBALL,
     ARROW,
+    MAGIC,
     EXPLOSION
 };
 
@@ -36,6 +37,6 @@ struct Projectile
 bool collisions(std::vector<Projectile>& projectiles, Entity& enemy);
 void update_projectile(Projectile& projectile);
 void remove_projectiles(std::vector<Projectile>& projectiles);
-void draw_projectiles(std::vector<Projectile>& projectiles);
+void draw_projectiles(std::vector<Projectile>& projectiles, Texture2D* textures);
 
 #endif

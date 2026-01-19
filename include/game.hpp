@@ -19,7 +19,7 @@
 
 
 enum class GameState {Menu, Game, Pause};
-enum class TextureAsset { Tilemap, Player, Dungeon, Hearts };
+enum class TextureAsset { Tilemap, Player, Dungeon, Hearts, Arrow, Torch, Magic };
 
 // function to get if coordinates are outside the bound
 // enemy class
@@ -50,7 +50,7 @@ class Timer
 class Game 
 {
     private:
-        static constexpr int MAX_TEXTURES = 4;
+        static constexpr int MAX_TEXTURES = 7;
         // static constexpr int WORLD_WIDTH = 20;
         // static constexpr int WORLD_HEIGHT = 18;
 

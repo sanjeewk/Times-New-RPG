@@ -21,7 +21,7 @@ Projectile Player::attack(float target_x, float target_y)
     Vector2 direction = Vector2Normalize(Vector2Subtract(Vector2{ target_x + 8, target_y + 8 }, Vector2{ x + 8, y + 8 }));
 
     // Create new projectile
-    Projectile newProjectile = { Vector2{x,y}, direction,  projectileSpeed, true, ProjectileType::FIREBALL};
+    Projectile newProjectile = { Vector2{x,y}, direction,  projectileSpeed, true, ProjectileType::MAGIC};
 
     return newProjectile;
 }

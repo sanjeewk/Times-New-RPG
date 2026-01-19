@@ -48,7 +48,7 @@ void remove_projectiles(std::vector<Projectile>& projectiles)
 }
 
 // Draw projectiles on tile map based on type
-void draw_projectiles(std::vector<Projectile>& projectiles)
+void draw_projectiles(std::vector<Projectile>& projectiles, Texture2D* textures)
 {
     for (const auto& projectile : projectiles)
     {
@@ -57,6 +57,27 @@ void draw_projectiles(std::vector<Projectile>& projectiles)
             if (projectile.type == ProjectileType::BULLET)
             {
                 DrawCircleV(projectile.position, projectileRadius, BLUE);
+            }
+            else if (projectile.type == ProjectileType::FIREBALL)
+            {
+                // Draw torch effect for fireball
+                Rectangle source = {0, 0, (float)textures[4].width, (float)textures[4].height};
+                Rectangle dest = {projectile.position.x - 8, projectile.position.y - 8, 16, 16};
+                DrawTexturePro(textures[5], source, dest, {0, 0}, 0, WHITE); // Torch texture
+            }
+            else if (projectile.type == ProjectileType::ARROW)
+            {
+                // Draw arrow effect
+                Rectangle source = {0, 0, (float)textures[4].width, (float)textures[4].height};
+                Rectangle dest = {projectile.position.x - 8, projectile.position.y - 8, 16, 16};
+                DrawTexturePro(textures[4], source, dest, {0, 0}, 0, WHITE); // Arrow texture
+            }
+            else if (projectile.type == ProjectileType::MAGIC)
+            {
+                // Draw magic effect - third column, second row (0-based: col 2, row 1)
+                Rectangle source = {256, 64*3, 64, 64};
+                Rectangle dest = {projectile.position.x - 8, projectile.position.y - 8, 16, 16};
+                DrawTexturePro(textures[6], source, dest, {0, 0}, 0, WHITE); // Magic texture
             }
             else
             {

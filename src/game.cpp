@@ -52,6 +52,15 @@ void Game::Startup()
     image = LoadImage("assets/sprites/hearts.png");
     textures[static_cast<int>(TextureAsset::Hearts)] = LoadTextureFromImage(image);
 
+    image = LoadImage("assets/dungeon_pack/items and trap_animation/arrow/just_arrow.png");
+    textures[static_cast<int>(TextureAsset::Arrow)] = LoadTextureFromImage(image);
+
+    image = LoadImage("assets/dungeon_pack/items and trap_animation/flamethrower/flamethrower_2_1.png");
+    textures[static_cast<int>(TextureAsset::Torch)] = LoadTextureFromImage(image);
+
+    image = LoadImage("assets/projectiles/magic.png");
+    textures[static_cast<int>(TextureAsset::Magic)] = LoadTextureFromImage(image);
+
     UnloadImage(image);
 
     // randomly pick tiles in world
@@ -539,46 +548,37 @@ void Game::render()
     }
 
     // Draw projectiles
-    draw_projectiles(player_projectiles);
-    draw_projectiles(enemy_projectiles);
+    draw_projectiles(player_projectiles, textures.data());
+    draw_projectiles(enemy_projectiles, textures.data());
 
     EndMode2D();
 
-    DrawRectangle(0, 0, 1100, 75, Fade(GRAY, 0.5f));
-    // Health indicator
+    // Draw health indicator on top left
     if(protagonist.health > 0) {
         int hearts = protagonist.health/25;
         for (int i = 0; i < hearts; ++i) {
-            DrawUITile(0 + i * 50, 0, 2, 0, 0, 4.0f);
+            DrawUITile(10 + i * 50, 10, 2, 0, 0, 3.0f);
         }
     }
     else {
         DrawText("You Died", 10, 10, 20, RED);
     }
-    // DrawUITile(0, -5, 2, 0, 0, 4.0f);
-    // DrawUITile(50, -5, 2, 0, 0, 4.0f);
-    // DrawUITile(100, -5, 2, 0, 0, 4.0f);
-  
-    // Draw stamina bar
-    int staminaBarWidth = 100;
-    int staminaBarHeight = 20;
-    int staminaBarX = GetScreenWidth() / 2 - staminaBarWidth / 2;
-    int staminaBarY = 10;
+
+    // Draw stamina bar on top left, below health
+    int staminaBarWidth = 120;
+    int staminaBarHeight = 15;
+    int staminaBarX = 10;
+    int staminaBarY = 60;
     int staminaBarFillWidth = (staminaBarWidth * protagonist.stamina) / Player::STAMINA_MAX;
 
-    // Draw pixelated background
-    for (int x = 0; x < staminaBarWidth; x++) {
-        for (int y = 0; y < staminaBarHeight; y++) {
-            DrawRectangle(staminaBarX + x, staminaBarY + y, 1, 1, GRAY);
-        }
-    }
-
-    // Draw pixelated fill
-    for (int x = 0; x < staminaBarFillWidth; x++) {
-        for (int y = 0; y < staminaBarHeight; y++) {
-            DrawRectangle(staminaBarX + x, staminaBarY + y, 1, 1, GREEN);
-        }
-    }
+    // Draw stamina bar background
+    DrawRectangle(staminaBarX, staminaBarY, staminaBarWidth, staminaBarHeight, DARKGRAY);
+    // Draw stamina bar fill
+    DrawRectangle(staminaBarX, staminaBarY, staminaBarFillWidth, staminaBarHeight, GREEN);
+    // Draw border
+    DrawRectangleLines(staminaBarX, staminaBarY, staminaBarWidth, staminaBarHeight, BLACK);
+    // Label
+    // DrawText("STAMINA", staminaBarX, staminaBarY - 20, 12, WHITE);
     // Draw pixelated border
     // for (int x = 0; x < staminaBarWidth; x++) { 
     //     DrawRectangle(staminaBarX + x, staminaBarY, 1, staminaBarHeight, DARKGRAY);
