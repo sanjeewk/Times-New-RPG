@@ -641,7 +641,11 @@ void Game::imageCaptureThread()
     {
         TraceLog(LOG_INFO, "Image capture thread running");
         if (!image_queue.empty()) {
-            TraceLog(LOG_INFO, "Sending image data to RL client");
+            // Ensure we only send the latest screenshot by clearing old ones
+            while (image_queue.size() > 1) {
+                image_queue.pop();
+            }
+            TraceLog(LOG_INFO, "Sending latest image data to RL client");
             auto buffer = std::move(image_queue.front());
             image_queue.pop();
 
