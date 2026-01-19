@@ -1,9 +1,6 @@
 # Times new RPG
 
-<video width="640" height="480" controls>
-  <source src="readme/Raylib 2D RPG.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+![Game Demo](assets/dungeon_pack/Dungeon_gif.gif)
 
 ![screen](readme/time-new.jpg)
 
