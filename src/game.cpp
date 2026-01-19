@@ -5,6 +5,16 @@
 #include <chrono>
 #include "rlgl.h"
 
+Action map_string_to_action(const std::string& action_str) {
+    if (action_str == "UP") return MOVE_UP;
+    if (action_str == "DOWN") return MOVE_DOWN;
+    if (action_str == "LEFT") return MOVE_LEFT;
+    if (action_str == "RIGHT") return MOVE_RIGHT;
+    if (action_str == "ATTACK") return FIRE_PROJECTILE;
+    // Default to MOVE_UP or something
+    return MOVE_UP;
+}
+
 Game::Game() : enemy(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT), protagonist(100, 7, 5 * TILE_WIDTH, 5 * TILE_HEIGHT, Zone::World)
 {
     GameState game_state = GameState::Menu;
@@ -188,25 +198,24 @@ void Game::Update()
 
     // Image sending is now handled by the background thread
 
-    if (enemy.isAlive) 
+    if (enemy.isAlive)
     {
         if (!combatTextTimer.isActive) {
-            //enemy.random_move(world);
-            //TraceLog(LOG_INFO, "2. Position: x=%f, y=%f", enemy.x, enemy.y);
-            // enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
             combatTextTimer.Start(0.5);
 
-            State current_state = {
-                static_cast<int>(protagonist.x / TILE_WIDTH),
-                static_cast<int>(protagonist.y / TILE_HEIGHT),
-                static_cast<int>(enemy.x / TILE_WIDTH),
-                static_cast<int>(enemy.y / TILE_HEIGHT),
-                enemy.health
-            };
-            // get the best action from the agent
-            Action action = agent.getBestAction(current_state);
-            //TraceLog(LOG_INFO, "agent");
-            if (action == FIRE_PROJECTILE) 
+            Action action;
+            if (client.hasResponse()) {
+                std::string action_str = client.getNextResponse();
+                action = map_string_to_action(action_str);
+                TraceLog(LOG_INFO, "Using AI action: %s", action_str.c_str());
+            } else {
+                // Random action
+                int random_action = GetRandomValue(0, ACTION_COUNT - 1);
+                action = static_cast<Action>(random_action);
+                // TraceLog(LOG_INFO, "Using random action: %d", random_action);
+            }
+
+            if (action == FIRE_PROJECTILE)
             {
                 audio.play_sound(SoundAsset::Laser);
                 TraceLog(LOG_INFO, "attack");
@@ -216,20 +225,6 @@ void Game::Update()
             {
                 bool result = enemy.move(action, world);
             }
-            
-
-            // GameAction next_move = api.getNextAction({
-            // static_cast<int>(protagonist.x / TILE_WIDTH),
-            // static_cast<int>(protagonist.y / TILE_HEIGHT),
-            // protagonist.health
-            // });
-            // if (next_move.action != Action::FIRE_PROJECTILE) {
-            //     protagonist.move(next_move.action, world);
-            // } else {
-            //     audio.play_sound(SoundAsset::Laser);
-            //     player_projectiles.push_back(protagonist.attack(enemy.x, enemy.y));
-            //     // enemy_projectiles.push_back(enemy.attack(protagonist.x, protagonist.y));
-            // }
         }
 
         else if (enemy.health <= 0)
@@ -596,6 +591,7 @@ void Game::render()
     DrawText(TextFormat("Enemy Health: %d", enemy.health), 820, 70, 14, YELLOW);
     DrawText(TextFormat("Player Money: %d", protagonist.money), 820, 90, 14, YELLOW);
     DrawText(TextFormat("player x y: %06.2f, %06.2f", protagonist.x, protagonist.y), 820, 110, 14, YELLOW);
+    DrawText(TextFormat("Frame: %d", frame_count), 820, 130, 14, YELLOW);
 
     if(game_state == GameState::Menu)
     {
@@ -617,15 +613,13 @@ void Game::render()
             WHITE
         );
     }
-    bool temp = true;
     // Capture current frame after rendering (at ~10 FPS for performance)
-    if (temp)
+    if (game_state == GameState::Game)
     {
-
         frame_count++;
         if (frame_count % 3 == 0) {  // Capture every 6th frame (60 FPS / 6 ≈ 10 FPS)
             // Use rlReadScreenPixels for direct pixel access 
-            TraceLog(LOG_INFO, "Capturing frame for image queue");
+            // TraceLog(LOG_INFO, "Capturing frame for image queue");
             int width = GetScreenWidth();
             int height = GetScreenHeight();
             int dataSize = width * height * 4;  // RGBA format (4 bytes per pixel)

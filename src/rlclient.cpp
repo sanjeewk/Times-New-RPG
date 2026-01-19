@@ -43,6 +43,21 @@ void AsyncGameClient::setResponseCallback(std::function<void(const json&)> callb
     response_callback_ = callback;
 }
 
+std::string AsyncGameClient::getNextResponse() {
+    std::lock_guard<std::mutex> lock(response_mutex_);
+    if (response_queue_.empty()) {
+        return ""; // Return empty string if no response
+    }
+    std::string action = response_queue_.front();
+    response_queue_.pop();
+    return action;
+}
+
+bool AsyncGameClient::hasResponse() {
+    std::lock_guard<std::mutex> lock(response_mutex_);
+    return !response_queue_.empty();
+}
+
 void AsyncGameClient::workerThread() {
     while (running_) {
         std::vector<char> request_data;
@@ -74,6 +89,11 @@ void AsyncGameClient::workerThread() {
             zmq::message_t reply;
             if (socket_.recv(reply)) {
                 json response = json::parse(reply.to_string());
+                std::string action = response["action"];
+                {
+                    std::lock_guard<std::mutex> lock(response_mutex_);
+                    response_queue_.push(action);
+                }
                 if (response_callback_) {
                     response_callback_(response);
                 }

@@ -21,6 +21,8 @@ public:
     
     void sendRequest(const std::vector<char>& data);
     void setResponseCallback(std::function<void(const json&)> callback);
+    std::string getNextResponse();
+    bool hasResponse();
     bool request_in_flight_{false};
 
 private:
@@ -34,10 +36,13 @@ private:
     std::queue<std::vector<char>> request_queue_;
     std::mutex queue_mutex_;
     std::condition_variable queue_cv_;
-    
+
+    std::queue<std::string> response_queue_;
+    std::mutex response_mutex_;
+
     std::mutex in_flight_mutex_;
     std::condition_variable response_cv_;
 
-    
+
     std::function<void(const json&)> response_callback_;
 };

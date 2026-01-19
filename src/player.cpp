@@ -73,19 +73,19 @@ bool Player::move(Action action, Tile world[20][18])
     {
         case Action::MOVE_UP: 
             move_y = -TILE_HEIGHT;
-            TraceLog(LOG_INFO, "Moving up");
+            // TraceLog(LOG_INFO, "Moving up");
             break;
         case Action::MOVE_DOWN: 
             move_y = +TILE_HEIGHT;
-            TraceLog(LOG_INFO, "Moving down");
+            // TraceLog(LOG_INFO, "Moving down");
             break;
         case Action::MOVE_LEFT: 
             move_x = -TILE_WIDTH;  
-            TraceLog(LOG_INFO, "Moving left");
+            // TraceLog(LOG_INFO, "Moving left");
             break;
         case Action::MOVE_RIGHT:
             move_x = TILE_WIDTH;
-            TraceLog(LOG_INFO, "Moving right");
+            // TraceLog(LOG_INFO, "Moving right");
             break;
     }
     x += move_x;
