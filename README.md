@@ -1,8 +1,8 @@
 # Times new RPG
 
-![Game Demo](assets/dungeon_pack/Dungeon_gif.gif)
+![Game Demo](readme/Raylib 2D RPG.gif)
 
-![screen](readme/time-new.jpg)
+<!-- ![screen](readme/time-new.jpg) -->
 
 Times new RPG is a retro top down RPG with a plot centered around time loop
 
@@ -21,14 +21,14 @@ Built with C++ and [raylib](https://www.raylib.com/).
 - Camera following the player
 - Simple AI for enemies
 
-## Screenshots
-![Menu Screen](assets/menu_screen.jpg)
+<!-- ## Screenshots
+![Menu Screen](assets/menu_screen.jpg) -->
 
 ## Getting Started
 
 ### Prerequisites
 - C++17 compatible compiler (e.g., MinGW-w64, MSVC)
-- [raylib](https://www.raylib.com/) (included as submodule/external)
+- [raylib](https://wwxw.raylib.com/) (included as submodule/external)
 - CMake or Make (for building)
 
 ### Building
